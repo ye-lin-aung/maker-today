@@ -1,6 +1,9 @@
 # Hugo default output directory
 /public
 
+# WebStorm
+.idea/
+
 ## OS Files
 # Windows
 Thumbs.db
