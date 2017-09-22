@@ -1,0 +1,24 @@
+server {
+    listen 80;
+    server_name maker.today;
+
+    root /home/nathan/Production/maker-today/public/;
+
+    location / {
+        index index.html
+        try_files $uri $uri.html =404;
+    }
+
+    error_page  404  /404.html;
+    charset utf-8;
+
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/maker.today/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/maker.today/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+
+    if ($scheme != "https") {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+}

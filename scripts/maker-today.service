@@ -1,0 +1,12 @@
+[Unit]
+Description=Hugo instance to serve maker.today
+After=network.target
+
+[Service]
+User=nathan
+Group=www-data
+WorkingDirectory=/home/nathan/Production/maker-today
+ExecStart=/usr/bin/hugo
+
+[Install]
+WantedBy=multi-user.target
