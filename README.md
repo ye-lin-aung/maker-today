@@ -4,8 +4,22 @@ Based on install instructions [available here](https://themes.gohugo.io/hugo-uni
 
 ### Install Hugo
 
+#### MacOS
+
 ```bash
 $ brew install hugo
+```
+
+#### Linux
+
+```bash
+TODO
+```
+
+#### Windows
+
+```bash
+TODO
 ```
 
 Check hugo version
@@ -34,6 +48,8 @@ $ git submodule add https://github.com/devcows/hugo-universal-theme themes/hugo-
 ## Add the theme to the config.toml file
 $ echo 'theme = "hugo-universal-theme"' >> config.toml
 ```
+
+**NOTE:** Don't edit the theme directly. simply override the files in the main directory instead
 
 ### Add Content
 
