@@ -138,6 +138,74 @@ paginate = 10
     # at 'exampleSite/data/features'.
     # For more informtion take a look at the README.
 
+[params.team]
+    enable = true
+    # Possibility to center items
+    #center = true
+    title = "Makers"
+    subtitle = "Meet our team!"
+    description = "We're"
+
+    # All team member's pictures are stored under 'static/img/team'.
+    # Replace them with your own too.
+    # Suggestion: Image size should be at least 360px*360px or the alignment might be affected.
+    [[params.team.members]]
+        img = "nathan-glover.png"
+        name = "Nathan Glover"
+        position = "Computer Science"
+        scope = [
+            "B.Tech, Curtin, 2017"
+        ]
+        # For bio markdown and even multiline strings are available.
+        bio = """I have a curious mind and enjoy exploring any and all fields of technology."""
+        social = [
+            ["fa-envelope", "mailto:nathan@glovers.id.au"],
+            ["fa-linkedin", "https://linkedin.com/in/glovernathan"],
+            ["fa-github", "https://github.com/t04glovern"],
+            ["fa-home", "http://nathanglover.com"]
+        ]
+        center = true
+
+    [[params.team.members]]
+        img = "stephen-mott.png"
+        name = "Stephen Mott"
+        position = "Mechanical Engineer"
+        scope = [
+            "B.Science, UWA, 2018"
+        ]
+        bio = """Student at The University of Western Australia."""
+        social = [
+            ["fa-envelope", "mailto:stephen@mott.id.au"]
+        ]
+        center = true
+
+    [[params.team.members]]
+        img = "rico-beti.png"
+        name = "Rico Beti"
+        position = "Software Engineer"
+        scope = [
+            "B.Science, ECU, 2018"
+        ]
+        bio = """I’m a passionate software engineer of Swiss origin now living in Perth, WA."""
+        social = [
+            ["fa-envelope", "mailto:rico@beti.ch"],
+            ["fa-linkedin", "https://www.linkedin.com/in/ricobeti"],
+            ["fa-github", "https://github.com/SilentByte"],
+            ["fa-home", "https://ricobeti.ch"]
+        ]
+
+    [[params.team.members]]
+        img = "luke-stokes.png"
+        name = "Luke Stokes"
+        position = "Mechatronics Engineer"
+        scope = [
+            "B.Sc, Curtin, 2018"
+        ]
+        bio = """Student of Curtin University."""
+        social = [
+            ["fa-linkedin", "https://www.linkedin.com/in/luke-stokes-408321144"]
+        ]
+
 [params.testimonials]
     enable = true
     # All testimonials are defined in their own files. You can find example items
@@ -164,5 +232,5 @@ paginate = 10
 
 [params.recent_posts]
     enable = true
-    title = "From our blog"
-    subtitle = "Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris placerat eleifend leo."
+    title = "Maker Blog"
+    subtitle = "What to check out some of the great stuff our team has been working on? Check out some of our latest posts!"
