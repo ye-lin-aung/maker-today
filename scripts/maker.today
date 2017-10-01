@@ -4,6 +4,38 @@ server {
 
     root /home/nathan/Production/maker-today/public/;
 
+    # Enable ngx_http_gzip_static_module
+    gzip_static on;
+
+    # Allow proxies to cache files
+    add_header  Cache-Control public;
+
+    # Set cache expiry based on the file extension.
+    # expires sets both Expires and Cache-Control: max-age headers
+    location ~ \.(html)$ {
+        expires   7d;
+    }
+
+    # Max is around until the year 2038
+    location ~ \.(ico|gif|jpe?g|png|svg|js|css)$ {
+        expires   max;
+    }
+
+    # Cache at most 1000 elements and remove those from the cache that
+    # haven't been accessed in 5 minutes
+    open_file_cache          max=1000 inactive=5m;
+
+    # How long the file information in the cache is valid, ie. how often to
+    # revalidate
+    open_file_cache_valid    5m;
+
+    # How often a file must be accessed during the period defined in
+    # open_file_cache in order to keep file descriptor open in the cache
+    open_file_cache_min_uses 1;
+
+    # Cache file lookup errors, so missing files won't slow us down
+    open_file_cache_errors   on;
+
     location / {
         index index.html
         try_files $uri $uri.html =404;
