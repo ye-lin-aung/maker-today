@@ -141,10 +141,10 @@ paginate = 10
 [params.team]
     enable = true
     # Possibility to center items
-    #center = true
+    center = true
     title = "Makers"
     subtitle = "Meet our team!"
-    description = "We're"
+    description = ""
 
     # All team member's pictures are stored under 'static/img/team'.
     # Replace them with your own too.
@@ -218,9 +218,9 @@ paginate = 10
     enable = true
     icon = "fa fa-file-code-o"
     title = "Do you want to see more?"
-    subtitle = "We have prepared for you more than 40 different HTML pages, including 5 variations of homepage."
-    link_url = "#"
-    link_text = "Check other homepages"
+    subtitle = "Check out some of our recent work!"
+    link_url = "/blog/"
+    link_text = "Recent Projects"
 
 [params.clients]
     enable = true

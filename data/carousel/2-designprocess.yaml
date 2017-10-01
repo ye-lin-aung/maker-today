@@ -1,0 +1,9 @@
+weight: 2
+title: "Step by Step"
+description: >
+  <ul class="list-style-none">
+     <li>Tutorials that anyone can follow</li>
+     <li>Follow our thought process</li>
+     <li>Comment on our outcomes</li>
+   </ul>
+image: "img/carousel/2-designprocess.png"

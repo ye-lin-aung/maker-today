@@ -1,9 +1,9 @@
 +++
-title = "Creating a new theme"
-date = "2015-06-24T13:50:46+02:00"
-tags = ["theme"]
-categories = ["starting"]
-banner = "img/banners/banner-1.jpg"
+title = "Introduction - Makers Today"
+date = "2017-10-01T17:33:20+08:00"
+tags = ["introduction"]
+categories = ["stories"]
+banner = "img/banners/introduction-to-makers-today.png"
 +++
 
 ## Introduction
