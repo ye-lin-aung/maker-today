@@ -3,7 +3,7 @@ title = "ublox NEO-6M - NMEA Parsing - Part 1"
 date = "2017-10-08T23:28:00+08:00"
 tags = ["gps"]
 categories = ["hardware"]
-banner = "img/banners/introduction-to-makers-today.png"
+banner = "img/blog/2017/10/ublox-gps-neo-demo-in-case.png"
 +++
 
 ## Introduction
@@ -48,6 +48,144 @@ The protocol we'll focus on for this guide is [NMEA 0183](https://en.wikipedia.o
 
 *UARTBaud rate:* 9600
 
+### Implementation
+---
+
+#### Schematic
+
+I used the following setup to first test that the board was providing me with the correct information.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/10/gps-neo-6m-board-schematic.png" />
+
+**NOTE:** *The documentation for the NEO-6M chip states that the board can operate within the 3.3v and 5v range, however there's the assumption that there will be signal/accuracy trade-off for running at a lower voltage. This is however something I need to test.*
+
+#### PlatformIO (Embedded IDE)
+
+I've recently begun using [PlatformIO](http://docs.platformio.org/en/latest/ide.html#platformio-ide) as my *goto* method for developing for embedded systems, and this project had me stumped for a few hours whilst I was trying to get the [NeoGPS](https://github.com/SlashDevin/NeoGPS) and [AltSoftSerial](https://github.com/PaulStoffregen/AltSoftSerial) libraries playing nicely with one another.
+
+I plan to go into more detail on the usage of PlatformIO in the future, however for the sake of time there's only really two things you need to ensure are present in the project file(s).
+
+* **platformio.ini** - ensure that the libraries we need [NeoGPS](https://github.com/SlashDevin/NeoGPS) and [AltSoftSerial](https://github.com/PaulStoffregen/AltSoftSerial) are present and defined under the board environment type.
+
+    ```xml
+    [env:nanoatmega328]
+    platform = atmelavr
+    board = nanoatmega328
+    framework = arduino
+    lib_deps = NeoGPS, AltSoftSerial
+    ```
+
+* **src/main.cpp** - Ensure that the libraries are referenced correctly and use the local ``lib`` instance of the libraries
+
+    ```cpp
+    #include <Arduino.h>
+    #include <NMEAGPS.h>
+    #include <GPSport.h>
+    ```
+
+#### Code
+
+The following code was mostly based on the [NeoGPS NMEA Example](https://github.com/SlashDevin/NeoGPS/blob/master/examples/NMEA/NMEA.ino)
+
+```cpp
+#include <Arduino.h>
+#include <NMEAGPS.h>
+#include <GPSport.h>
+#include <Streamers.h>
+
+//  This object parses received characters
+//  into the gps.fix() data structure
+static NMEAGPS gps;
+
+//  Define a set of GPS fix information.  It will
+//  hold on to the various pieces as they are received from
+//  an RMC sentence.  It can be used anywhere in your sketch.
+static gps_fix fix;
+
+//  This function gets called about once per second, during the GPS
+//  quiet time.  It's the best place to do anything that might take
+//  a while: print a bunch of things, write to SD, send an SMS, etc.
+//
+//  By doing the "hard" work during the quiet time, the CPU can get back to
+//  reading the GPS chars as they come in, so that no chars are lost.
+static void doSomeWork()
+{
+  trace_all(DEBUG_PORT, gps, fix);
+}
+
+//  This is the main GPS parsing loop.
+static void GPSloop()
+{
+  while (gps.available(gpsPort))
+  {
+    fix = gps.read();
+    doSomeWork();
+  }
+}
+
+void setup()
+{
+  DEBUG_PORT.begin(9600);
+  while (!DEBUG_PORT)
+    ;
+
+  DEBUG_PORT.print(F("NMEA.INO: started\n"));
+  DEBUG_PORT.print(F("  fix object size = "));
+  DEBUG_PORT.println(sizeof(gps.fix()));
+  DEBUG_PORT.print(F("  gps object size = "));
+  DEBUG_PORT.println(sizeof(gps));
+  DEBUG_PORT.println(F("Looking for GPS device on " GPS_PORT_NAME));
+
+#ifndef NMEAGPS_RECOGNIZE_ALL
+#error You must define NMEAGPS_RECOGNIZE_ALL in NMEAGPS_cfg.h!
+#endif
+
+#ifdef NMEAGPS_INTERRUPT_PROCESSING
+#error You must *NOT* define NMEAGPS_INTERRUPT_PROCESSING in NMEAGPS_cfg.h!
+#endif
+
+#if !defined(NMEAGPS_PARSE_GGA) & !defined(NMEAGPS_PARSE_GLL) & \
+    !defined(NMEAGPS_PARSE_GSA) & !defined(NMEAGPS_PARSE_GSV) & \
+    !defined(NMEAGPS_PARSE_RMC) & !defined(NMEAGPS_PARSE_VTG) & \
+    !defined(NMEAGPS_PARSE_ZDA) & !defined(NMEAGPS_PARSE_GST)
+
+  DEBUG_PORT.println(F("\nWARNING: No NMEA sentences are enabled: no fix data will be displayed."));
+
+#else
+  if (gps.merging == NMEAGPS::NO_MERGING)
+  {
+    DEBUG_PORT.print(F("\nWARNING: displaying data from "));
+    DEBUG_PORT.print(gps.string_for(LAST_SENTENCE_IN_INTERVAL));
+    DEBUG_PORT.print(F(" sentences ONLY, and only if "));
+    DEBUG_PORT.print(gps.string_for(LAST_SENTENCE_IN_INTERVAL));
+    DEBUG_PORT.println(F(" is enabled.\n"
+                         "  Other sentences may be parsed, but their data will not be displayed."));
+  }
+#endif
+
+  DEBUG_PORT.print(F("\nGPS quiet time is assumed to begin after a "));
+  DEBUG_PORT.print(gps.string_for(LAST_SENTENCE_IN_INTERVAL));
+  DEBUG_PORT.println(F(" sentence is received.\n"
+                       "  You should confirm this with NMEAorder.ino\n"));
+
+  trace_header(DEBUG_PORT);
+  DEBUG_PORT.flush();
+
+  gpsPort.begin(9600);
+}
+
+void loop()
+{
+  GPSloop();
+}
+```
+
+### Results
+---
+
+#### Prototype
+
+<img class="img-responsive image-box-shadow img-align" src="/img/blog/2017/10/ublox-gps-neo-demo-in-case.png" />
 
 #### Output
 
@@ -71,31 +209,6 @@ Status,UTC Date/Time,Lat,Lon,Hdg,Spd,Alt,Sats,Rx ok,Rx err,Rx chars,
 3,2017-10-08 17:18:59.000,-319938683,1159107800,,56,1180,5,136,0,7896,
 3,2017-10-08 17:19:00.000,-319938682,1159107808,,68,1180,5,145,0,8418,
 3,2017-10-08 17:19:01.000,-319938683,1159107812,,87,1190,5,154,0,8940
-```
-
-### PlatformIO
----
-
-I've recently begun using [PlatformIO](http://docs.platformio.org/en/latest/ide.html#platformio-ide) as my *goto* method for developing for embedded systems, and this project had me stumped for a few hours whilst I was trying to get the [NeoGPS](https://github.com/SlashDevin/NeoGPS) and [AltSoftSerial](https://github.com/PaulStoffregen/AltSoftSerial) libraries playing nicely with one another.
-
-I plan to go into more detail on the usage of PlatformIO in the future, however for the sake of time there's only really two things you need to ensure are present in the project file(s).
-
-* **platformio.ini** - ensure that the libraries we need [NeoGPS](https://github.com/SlashDevin/NeoGPS) and [AltSoftSerial](https://github.com/PaulStoffregen/AltSoftSerial) are present and defined under the board environment type.
-
-```ini
-[env:nanoatmega328]
-platform = atmelavr
-board = nanoatmega328
-framework = arduino
-lib_deps = NeoGPS, AltSoftSerial
-```
-
-* **src/main.cpp** - Ensure that the libraries are referenced correctly and use the local ``lib`` instance of the libraries
-
-```cpp
-#include <Arduino.h>
-#include <NMEAGPS.h>
-#include <GPSport.h>
 ```
 
 ### References
