@@ -9,6 +9,8 @@ defaultContentLanguage = "en"
 disqusShortname = "t04glovern"
 # Enable Google Analytics by entering your tracking code
 googleAnalytics = "UA-71336829-2"
+# Enable Robots
+enableRobotsTXT = true
 
 # Define the number of posts per page
 paginate = 10
