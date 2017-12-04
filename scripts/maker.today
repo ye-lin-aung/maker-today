@@ -1,6 +1,6 @@
 server {
     listen 80;
-    server_name maker.today;
+    server_name maker.today www.maker.today;
 
     root /home/nathan/Production/maker-today/public/;
 
