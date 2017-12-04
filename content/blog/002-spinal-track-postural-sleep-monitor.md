@@ -3,7 +3,7 @@ title = "SpinalTrack - Postural Sleep Monitor"
 date = "2017-12-04T21:49:00+08:00"
 tags = ["medical"]
 categories = ["software"]
-banner = "img/banners/introduction-to-makers-today.png"
+banner = "img/blog/2017/12/spinal-track-icon.png"
 +++
 
 ## Elevator Pitch
