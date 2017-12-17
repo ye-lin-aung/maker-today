@@ -1,0 +1,162 @@
++++
+title = "Toaster Stationary Box"
+date = "2017-12-17T21:24:00+08:00"
+tags = ["toaster", "stationary"]
+categories = ["DIY"]
+banner = "img/blog/2017/12/toaster-box-icon.png"
++++
+
+## Introduction
+---
+
+We recently visited [Spotlight](https://www.spotlightstores.com), a local craft & knick-knack store in search of a DIY stationary kit that would be assembled and built into a christmas gift for some close friends.
+
+After spending a while searching we came across a `DIY` kit the just required assembly.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/stationary-kit-spotlight.jpg" />
+
+The kit was ok, and it would have done the job, however the price was a little much for what was effectively just some laser cut MDF.
+
+We were just about to concede and spend the money when I noticed something out of the corner of my eye. It was **sleek**, **white** and **curved** in all the right places.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-spotlight.jpg" />
+
+I knew when I saw it that it was perfect, half the price as well meaning I had an extra ten dollary-doos to spend on decorations.
+
+### BOM
+---
+
+* 1x - [IMK 2 Slice Toaster](https://www.spotlightstores.com/kitchen-dining/kitchen-appliances/toasters/imk-2-slice-toaster/p/BP80271373) : $9.95
+* 1x - [Nano CH340/ATmega328P](https://www.aliexpress.com/item/Nano-CH340-ATmega328P-MicroUSB-Compatible-for-Arduino-Nano-V3/32572612009.html) : $2.49
+* 16x - Red, Blue, Green, Yellow LEDs
+
+### Toaster Teardown
+---
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-pop-feature.gif" />
+
+The toaster itself was pretty simple in design. Running off 240V it had a small stepdown circuit which doubled as the circuit board for the toast timer and ejector button.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-teardown-circuit.jpg" />
+
+#### Electromagnet
+---
+
+This **94V** component is the mechanism that holds the bread-bays down when the toaster is operational. As shown below, when the bays are lowered the metal pad on the base of the plastic handle clicks into place between two copper pads.
+
+Both the copper pads are pushed into the pads on the outside, activating the toaster circuit. When the circuit goes active the electromagnet grips the spring-loaded mechanism and holds it in place.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-spring-demo.gif" />
+
+#### Potentiometer
+---
+
+The potentiometer is very standard, it serves as a control mechanism for the length of time you want to toast the bread for. As the potentiometer is twisted, the amount of resistance in the timer circuit is increased.
+
+A capacitor charges through a resistor, and when it reaches a certain voltage it cuts off the power to the electromagnet. The spring immediately pulls the two slices of bread up.
+
+Changing the resistance changes the rate at which the capacitor charges, and this controls how long the timer waits before releasing the electromagnet.
+
+#### Press switch
+---
+
+The switch button provides a method of quickly discharging the capacitors in the toasting circuit which has the effect of releasing the magnetic mechanism at any point during the toast.
+
+### Toastuino
+---
+
+The only thing I knew I wanted for sure going into this project was **Lots of LEDs**. So I set to work on adding 16 around the center of one panel on the toaster.
+
+#### LED Hell
+---
+
+Something I knew but chose to ignore about LEDs early on is that they have different **forward bias voltage** requirements.
+
+When the forward bias voltage becomes large enough, excess electrons from one side of the junction (diode) start to combine with holes from the other side. When this occurs, the electrons fall into a less energetic state and release energy. In LEDs this energy is released in the form of photons.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-led-roygbuiw.png" />
+
+The materials from which the LED is made determine the wavelength, and therefore the color of the emitted light.
+
+I made three mistakes:
+
+* **LEDs use voltage** - Initially I setup my 16 LEDs in series and completely blanked on the fact that there would be a voltage drop equal to the forward bias voltage at each LED in the chain. This meant that when testing I would have 2-3 LEDs light up before the chain would just not work.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-led-series.jpg" />
+
+* **LEDs use current** - I next attempted to place each of my LEDs in parallel, laying out a 5V line and ground line in the center. This design also didn't make it too far as I realised pretty quickly that the drop in current was far too great to power each of the LEDs in this configuration. It also clicked that I wouldn't have any control over which LEDs lit up and which ones didn't, and I decided to go back to the drawing board and redesign this to allow for better control over the LEDs.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-led-parallel.jpg" />
+
+* **Blue LEDs suck (voltage)** - As expressed in the ROYGBUIW LED diagram above, Blue LEDs require upwards of around 3.3-4.1V to operate. This meant that when I eventually chained 8 groups of LEDs, with two LEDs per group; the groups with blue LEDs in them, and esspecially if they were first in order would drain almost all the voltage leaving very little for the next LED in the series. I didn't really get around this problem, and simply replaced/changed the order of the blue LEDs in the groups.
+
+The final design, that uses 8 groups of 2 LEDs in series can be seen below.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-led-series-groups.jpg" />
+
+Each of these 8 groups has a **220 ohm** resistor on its Voltage in line. These lines are run off to the side with the intent being to hook them up to an Arduino to control.
+
+#### LED Code
+---
+
+I've setup a repo to house the code for this project here: [https://github.com/t04glovern/toastuino](https://github.com/t04glovern/toastuino).
+
+The logic is extremely simple, it simply cycles through digital pins 4-11 and adjusts the speed that the LEDs cycle at using the variable resistance value from the potentiometer on the unit.
+
+```cpp
+#include <Arduino.h>
+
+const byte pinCount = 8;
+const byte ledPins[pinCount] = {4, 5, 6, 7, 8, 9, 10, 11};
+
+const int buttonPin = 3;
+const int speedPin = 2;
+
+int lightSpeed = 1; // Value * 100 = delay
+
+int led = 1;
+
+int prevUp = HIGH;
+
+void setup()
+{
+    pinMode(buttonPin, INPUT);
+} // end of setup
+
+void turnOnLED(const byte which, const byte brightness)
+{
+    for (byte i = 0; i < pinCount; i++)
+        analogWrite(ledPins[i], 0);
+
+    if (which > 1)
+        analogWrite(ledPins[which - 2], brightness); // make "which" zero-relative
+} // end of turnOnLED
+
+void loop()
+{
+    if (led > pinCount + 1)
+        led = 1;
+
+    turnOnLED(led++, 255);
+
+    int sensorValue = analogRead(A0);
+    lightSpeed = map(sensorValue, 0, 1024, 8, 1);
+    delay(lightSpeed * 100);
+
+} // end of loop
+```
+
+The potentiometer and switch button were just tapped onto from the toasters original PCB
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-potentiometer.jpg" />
+
+This code and the LEDs from the previous step worked flawlessly-ish. There's a couple tweaked I wanted to make, but for now I was happy with it and wanted to close the box up.
+
+I removed the old power cable from the hole in the base and replaced it with a simple USB data cable to power the unit and also allow me to flash the Arduino firmware whenever I needed to.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-usb-connector.jpg" />
+
+### Decoration
+---
+
+TODO
