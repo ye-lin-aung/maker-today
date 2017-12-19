@@ -159,4 +159,51 @@ I removed the old power cable from the hole in the base and replaced it with a s
 ### Decoration
 ---
 
-TODO
+For the decorations I decided I wanted to parts; Paint and 3D printed objects!
+
+#### 3D Printed Snowflakes
+---
+
+Pretty self explanatory, I recently picked up a [Creality CR-10 3D Printer](https://www.banggood.com/DIY-Creality-CR-10-3D-Printer-300300400mm-Printing-Size-1_75mm-0_4mm-Nozzle-p-1085645.html) from [Banggood](https://www.banggood.com/) and I've been looking for excuses to use it.
+
+I found these nice little snowflakes on [Thingiverse](https://www.thingiverse.com/thing:1958298) and decided they'd probably make a nice little addition (given the LEDs didn't end up taking as much space).
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/snowflake-3d-print-normal.jpg" />
+
+I set these to the side, as I would need to deal with painting the unit before I could get too carried away with attaching random stuff to the frame.
+
+#### Painting a Toaster
+---
+
+I'd picked out two colours for the toaster:
+
+* Pyrrole Red
+* Australian Sap Green
+
+These were acrylic paints which I'd kinda just guessed would work okay on the plastic body of the toaster. I'd based this thought on my comparison between acrylic vs water colour paint... I'll get into this decision a little later
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-painting-00.jpg" />
+
+I began painting the toasters white plastic frame up to the point where I needed to cover the LEDs so i didn't cover them in the green slop. I just used some of the tape I had lying around from my 3D printer and continued without too much thought.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-painting-01.jpg" />
+
+For the base of the toaster I mixed some of my red and green to create a brownish red, which I kinda prefered over the raw red, and kinda regret not painting the red parts this new colour instead.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-painting-02.jpg" />
+
+The red kinda looked a little different from every angle, which was interesting; still not too sure how I feel about it.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-painting-03.jpg" />
+
+I also cleanly closed the white strip by hot gluing a star themed strap around the middle of the toaster.
+
+It was at this point where I ran into an annoying problem. As I began peeling off the tape on the LED, the acrylic paint stretched with the tape and tore in a number of places.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-painting-04.jpg" />
+
+It was a nascence however I mostly fixed up the holes in the paint by using a thin brush and some steady hand strokes.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-painting-05.jpg" />
+
+At this point I needed to let the acrylic dry overnight to strengthen.
