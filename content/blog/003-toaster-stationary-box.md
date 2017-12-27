@@ -276,6 +276,10 @@ I managed to save the print near the end and re-designed the slots to be in two 
 
 The completed slots turned out pretty awesome! Considering I sorta half assed teh measurements I'd kinda assumed I would have to sand down the edges of the plastic; however this was not the case and both fit snug into the toaster holes.
 
+[Christmas Toaster Slots - STL](/img/blog/2017/12/christmas-toaster-slots.stl)
+
+[Christmas Toaster Top - STL](/img/blog/2017/12/christmas-toaster-top.stl)
+
 <img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-slot-outcome.jpg" />
 
 <img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-slot-insert.gif" />
