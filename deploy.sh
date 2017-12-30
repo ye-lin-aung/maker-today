@@ -1,3 +1,8 @@
+# Pull submodule
+cd themes/hugo-universal-theme/
+git pull
+cd ../..
+
 # Run Hugo
 hugo
 
