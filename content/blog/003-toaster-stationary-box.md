@@ -207,3 +207,79 @@ It was a nuisance however I mostly fixed up the holes in the paint by using a th
 <img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-painting-05.jpg" />
 
 At this point I needed to let the acrylic dry overnight to strengthen.
+
+### Toastuino Talks
+---
+
+Being a christmas toaster I wanted it to be as festive as possible.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-festive-define.png" />
+
+Festive defined a number of synonyms that my toaster would have to invoke. The two that stood out for me were `hilarious` and `merry`. I was also handling the rest fairly well with the LEDs and paints, however it was lacking a certain audible joyfulness that I wasn't going to leave unhandled.
+
+<iframe class="img-responsive image-box-shadow" width="560" height="315" src="https://www.youtube.com/embed/tI0o4WwpXTY" frameborder="0" gesture="media" allow="encrypted-media" allowfullscreen></iframe>
+
+I found this video and knew it was perfect! The plan was to have the toaster SING! or the very least speak...
+
+#### Audio Playback on an ATmega328
+---
+
+The process of playing audio from a real-time operating system is completely different the playing a clip from a single chip micro-controller. This is especially the case when you are also trying to replay LED transitions at the same time.
+
+The other complexity is around how I was going to hook up a speaker to the Arduino whilst minimizing the pin usages and circuit complexity (especially now that I've already got all the components fitted in place with hot-snot.
+
+The answer to my worries came in the form of a fantastic blog post on [High-Low Tech](http://highlowtech.org/?p=1963) that explained and demonstrated how I could use PWM duty cycles over 1-wire to play audio.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-speaker-connections.jpg" />
+
+There are two caveats:
+
+1. **No SD Card**
+
+    Means we are limited to the program memory for the audio clip (32kb).
+
+2. **Quiet Audio**
+
+    As I don't have an amplifier circuit, I can only produce a quiet output due to the voltage limitations from the PWM pin output.
+
+More details on how the Audio code works is available on [Toastuino (Audio Encoding) repo](https://github.com/t04glovern/toastuino#audio-encoding) however I'll briefly outline the steps I took to prep and load the audio.
+
+1. Youtube -> MP3
+2. MP3 cut down to 1.5 seconds (Audacity)
+3. MP3 Converted and output at a sample rate of 8Khz and a bit rate of 16Khz (iTunes).
+4. Down sampled Audio converted to numeric values (EncodeAudio.exe).
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-speaker-code.jpg" />
+
+The resulting numeric output, whilst not pretty does do the job fairly well, and it means I can accomplish audio clip replay over 1 PWM wire.
+
+### Stationary Slots
+---
+
+The final piece of the box was a couple slots for the stationary to sit in. I realised this was a requirement after dropping a pen inside the box and having it get lodged in the metal grills.
+
+This was also an excellent opportunity for me to get my hands dirty on CAD design!
+
+I started measuring out the slot sizes, when I was quickly alerted to the fact that `I was doing it wrong` by Stephen, and that I should be sketching my designs out on paper if I want to ever be considered legit.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-measurements.jpg" />
+
+So yeah, I drew out the plans and to be perfectly honest, I didn't look at them again during the CAD design.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-measurement-drawing.jpg" />
+
+I iterated a couple times on my slot design, Initially the I ran a 24 hour print on the completed piece. This was a huge mistake, as there were a lot of support material required to ensure the flaps were properly attached.
+
+I managed to save the print near the end and re-designed the slots to be in two pieces, then completed another print of the full size slow box and finished the prints off with two rectangular slot handles that I hot-glued on.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-slot-design.jpg" />
+
+The completed slots turned out pretty awesome! Considering I sorta half assed teh measurements I'd kinda assumed I would have to sand down the edges of the plastic; however this was not the case and both fit snug into the toaster holes.
+
+[Christmas Toaster Slots - STL](/img/blog/2017/12/christmas-toaster-slots.stl)
+
+[Christmas Toaster Top - STL](/img/blog/2017/12/christmas-toaster-top.stl)
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-slot-outcome.jpg" />
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-slot-insert.gif" />
