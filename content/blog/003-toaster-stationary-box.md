@@ -202,7 +202,7 @@ It was at this point where I ran into an annoying problem. As I began peeling of
 
 <img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-painting-04.jpg" />
 
-It was a nascence however I mostly fixed up the holes in the paint by using a thin brush and some steady hand strokes.
+It was a nuisance however I mostly fixed up the holes in the paint by using a thin brush and some steady hand strokes.
 
 <img class="img-responsive image-box-shadow" src="/img/blog/2017/12/toaster-painting-05.jpg" />
 
