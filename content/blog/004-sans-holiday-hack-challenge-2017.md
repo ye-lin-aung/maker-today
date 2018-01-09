@@ -11,7 +11,7 @@ banner = "img/blog/2017/12/sans-holiday-hack-banner.png"
 
 The following post outlines the technical steps taken to complete the SANS Holiday Hack Challenge 2017.
 
-Full Post will go live after the report submission deadline on 10th of January 2018.
+A copy of the PDF of this post is available [HERE](/misc/2017/12/nathan-glover-sans-hhc2017.pdf)
 
 ## North Pole and Beyond Story
 ---
