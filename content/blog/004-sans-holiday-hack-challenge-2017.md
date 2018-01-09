@@ -1287,6 +1287,98 @@ The page explains that a ``Terrorist group called The Lollipop Guild`` is likely
 
 **Task:** How many infractions are required to be marked as naughty on Santa's Naughty and Nice List? What are the names of at least six insider threat moles? Who is throwing the snowballs from the top of the North Pole Mountain and what is your proof?
 
+For this challenge I had to make a best assessment about who the Moles were likely to be. Two of them were supplied to us via the `BOLO - Munchkin Mole Report.docx` file that was on the SMB server from challenge 2.
+
+```bash
+Name: Boq Questrian
+Height: Approximately 4 feet
+Weight: Unknown
+Appearance: Reddish skin tone, blue eyes. A single curl of hair dominates an otherwise unremarkable hairstyle.
+Warning: Boq is uncannily accurate at short-distance rock throwing.
+
+Name: Bini Aru
+Height: Approximately 4 feet
+Weight: Unknown
+Appearance: Pale skin, grey eyes. Unruly black hair.
+Warning: Bini is unrelenting in hair pulling.
+```
+
+We were also supplied with a full list of the naughty and nice elves. I sorted this list and extracted a list of the Naughty names
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge04-excel-export.jpg" />
+
+There were `79 names` I needed to narrow down still
+
+Using the query service on http://nppd.northpolechristmastown.com/infractions?query I managed to get a complete list of all entries in the database using the `severity>0` flag. 999 entires to sort.
+
+I then used the online service https://json-csv.com/ to convert the JSON data to CSV. Once they were in CSV format I opened it in excel and sorted by the severity (number of coals).
+
+I took a look at the hints and number three stood out as my next avenue of attack
+
+```bash
+I'm still a little shaken up from when I had to call them in the other day. Two elves started fighting, pulling hair, and throwing rocks. There was even a super atomic wedgie involved! Later we were told that they were Munchkin Moles, though I'm still not sure I can believe that.
+```
+
+I lifted the list of names that were caught for atomic Wedgies
+
+```bash
+closed	5	Giving super atomic wedgies		2015-12-25T00:00:00	Cindy Lou Who
+closed	5	Giving super atomic wedgies		2015-12-25T00:00:00	Cindy Lou Who
+open	5	Giving super atomic wedgies		2015-12-25T00:00:00	Cindy Lou Who
+open	5	Giving super atomic wedgies		2017-12-11T12:49:47	Claire Gurung
+open	5	Giving super atomic wedgies		2017-05-06T17:48:46	Cody Khalil
+pending	5	Giving super atomic wedgies		2017-10-15T17:03:04	Corey Malhotra
+closed	5	Giving super atomic wedgies		2017-05-20T11:42:02	Curtis Summers
+closed	5	Giving super atomic wedgies		2017-11-17T00:49:23	Damian Bhardwaj
+closed	5	Giving super atomic wedgies		2017-12-19T14:45:17	Deanna Richardson
+```
+
+I also found that it might not just be 5 coal level that could be moles
+
+Nina seems like a candidate she would be another candidate
+
+```
+Aggravated pulling of hair	2017-02-02T12:13:51	Nina Fitzgerald
+Bedtime violation	2017-12-10T20:29:27	Nina Fitzgerald
+Giving super atomic wedgies	2017-05-21T08:56:25	Nina Fitzgerald
+Possession of unlicensed slingshot	2017-12-02T00:33:54	Nina Fitzgerald
+Throwing rocks (at people)	2017-07-11T08:01:03	Nina Fitzgerald
+Throwing rocks (at people)	2017-07-03T19:55:49	Nina Fitzgerald
+```
+
+Kristy also fits the build for the other people getting into the fight
+
+```
+Aggravated pulling of hair	2017-12-14T04:57:40	Kirsty Evans
+Crayon on walls	2017-07-16T03:24:39	Kirsty Evans
+Giving super atomic wedgies	2017-09-14T10:10:52	Kirsty Evans
+Throwing rocks (at people)	2017-06-15T13:31:15	Kirsty Evans
+```
+
+and cross referenced these names with the names who were also caught fighting by, `pulling hair` and `throwing rocks`.
+
+The final two Moles would have to be the only two with the Offense being `Trying to ruin Christmas`
+
+```
+Trying to ruin Christmas	2015-12-25T00:00:00	Cindy Lou Who
+Trying to ruin Christmas	2016-12-25T00:00:00	Dr. Who
+```
+
+Overall my best guess would be:
+
+* Boq Questrian
+* Bini Aru
+* Kirsty Evans
+* Nina Fitzgerald
+* Cindy Lou Who
+* Dr. Who
+
+The person to blame for the throwing the snowballs from the top of the North Pole Mountain is Glinda, The Good Witch. After completing all the overworld levels she provides us with a conversation where she admits to casting a magic spell on the Abominable Snow Monster to make him throw all the snowballs are the north pole.
+
+She did it to drive up the cost of her magic and spells and she planned to sell her services to both sides of the all-out WAR it would have created.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge04-witch-of-oz.jpg" />
+
 ### Elf as a Service
 
 **Task:** The North Pole engineering team has introduced an Elf as a Service (EaaS) platform to optimize resource allocation for mission-critical Christmas engineering projects at http://eaas.northpolechristmastown.com. Visit the system and retrieve instructions for accessing The Great Book page from **C:\greatbook.txt**. Then retrieve The Great Book PDF file by following those directions. What is the title of The Great Book page?
