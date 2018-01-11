@@ -1,7 +1,7 @@
 +++
 title = "SANS Holiday Hack Challenge 2017"
 date = "2017-12-29T00:16:00+08:00"
-tags = ["SANS", "hacking"]
+tags = ["SANS", "ctf"]
 categories = ["security"]
 banner = "img/blog/2017/12/sans-holiday-hack-banner.png"
 +++
