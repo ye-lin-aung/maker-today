@@ -1279,7 +1279,7 @@ Reading through all the emails, I could tell some of this information was likely
 
 <img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge03-greatbookpage4.jpg" />
 
-I could navigate to the url http://mail.northpolechristmastown.com/attachments/GreatBookPage4_893jt91md2.pdf and download a copy of **[GreatBookPage4.pdf](/misc/2017/12/GreatBookPage4.pdf)**. The title of this page was **The Rise of the Lollipop Guild**.
+I could navigate to the url `/attachments/GreatBookPage4_893jt91md2.pdf` page and download a copy of **[GreatBookPage4.pdf](/misc/2017/12/GreatBookPage4.pdf)**. The title of this page was **The Rise of the Lollipop Guild**.
 
 The page explains that a ``Terrorist group called The Lollipop Guild`` is likely to have infiltrated the elven population and are living amongst those small little toymaker living in the North Pole. The terrorists living in society are called ``Munchkin Moles``. These are just rumors, but is it so hard to believe?
 
