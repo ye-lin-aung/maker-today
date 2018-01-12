@@ -12,6 +12,13 @@ googleAnalytics = "UA-71336829-2"
 # Enable Robots
 enableRobotsTXT = true
 
+# Syntax highlighting
+PygmentsCodeFences = true
+PygmentsStyle = "friendly"
+# options = ['monokai', 'manni', 'rrt', 'perldoc', 'borland', 'colorful',
+#   'default', 'murphy', 'vs', 'trac', 'tango', 'fruity', 'autumn' 'bw',
+#   'emacs', 'vim', 'pastie', 'friendly', 'native']
+
 # Define the number of posts per page
 paginate = 10
 
