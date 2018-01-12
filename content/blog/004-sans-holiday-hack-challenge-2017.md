@@ -1279,7 +1279,7 @@ Reading through all the emails, I could tell some of this information was likely
 
 <img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge03-greatbookpage4.jpg" />
 
-I could navigate to the url `http://mail.northpolechristmastown.com/attachments/GreatBookPage4_893jt91md2.pdf` and download a copy of **[GreatBookPage4.pdf](/misc/2017/12/GreatBookPage4.pdf)**. The title of this page was **The Rise of the Lollipop Guild**.
+I could navigate to the url http://mail.northpolechristmastown.com/attachments/GreatBookPage4_893jt91md2.pdf and download a copy of **[GreatBookPage4.pdf](/misc/2017/12/GreatBookPage4.pdf)**. The title of this page was **The Rise of the Lollipop Guild**.
 
 The page explains that a ``Terrorist group called The Lollipop Guild`` is likely to have infiltrated the elven population and are living amongst those small little toymaker living in the North Pole. The terrorists living in society are called ``Munchkin Moles``. These are just rumors, but is it so hard to believe?
 
@@ -1475,7 +1475,7 @@ Serving HTTP on 0.0.0.0 port 9002 ...
 35.185.118.225 - - [09/Jan/2018 20:33:30] "GET /?http://eaas.northpolechristmastown.com/xMk7H1NypzAqYoKw/greatbook6.pdf HTTP/1.1" 200 -
 ```
 
-Navigating to http://eaas.northpolechristmastown.com/xMk7H1NypzAqYoKw/greatbook6.pdf resulted in the successful aquisition of **[GreatBookPage6.pdf](/misc/2017/12/GreatBookPage6.pdf)**
+Navigating to `/xMk7H1NypzAqYoKw/greatbook6.pdf` resulted in the successful aquisition of **[GreatBookPage6.pdf](/misc/2017/12/GreatBookPage6.pdf)**
 
 The tile of the newly found page was **The Dreaded Inter-Dimensional Tornadoes**
 
@@ -1499,7 +1499,7 @@ Reading over all the emails brought to light a few things:
 * Alabaster mentions that he has `netcat` installed on his system and also mentions PowerShell.
 * Tarpin McJingle Hauser emails `all@` saying she's going to be sending out a recipe file with the words `gingerbread`, `cookie` and `recipe` in the email. She also said it will be in a `.docx` file. Oddly specific...
 * Alabaster says, and I quote: **"please send it to me in a docx file. Im currently working on my computer and would download that to my machine, open it, and click to all the prompts."**
-* Finally there was a link to a png file at http://mail.northpolechristmastown.com/attachments/dde_exmaple_minty_candycane.png that can be seen below.
+* Finally there was a link to a png file at `/attachments/dde_exmaple_minty_candycane.png` that can be seen below.
 
 <img class="img-responsive image-box-shadow" src="/img/blog/2017/12/hhc2017-challenge06-dde-image.jpg" />
 
@@ -1581,9 +1581,9 @@ $('#help_button').click(function(e){
 
 On top of this I also noted down the three endpoints I found while OWASP ZAP was running as my proxy
 
-* http://edb.northpolechristmastown.com/index.html
-* http://edb.northpolechristmastown.com/index.html/service
-* http://edb.northpolechristmastown.com/index.html/login
+* edb.northpolechristmastown.com/index.html
+* edb.northpolechristmastown.com/index.html/service
+* edb.northpolechristmastown.com/index.html/login
 
 The regular expressions for the user account field turned out to just be the following:
 
