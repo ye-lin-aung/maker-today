@@ -12,10 +12,30 @@ $ brew install hugo
 
 #### Linux
 
+Snap Package 
 ```bash
-TODO
+snap install hugo --channel=extended
 ```
-
+Debian and Ubuntu 
+```bash
+sudo apt-get install hugo
+```
+Arch Linux 
+```bash
+sudo pacman -Syu hugo
+```
+Fedora, Red Hat and CentOS  
+```bash
+sudo dnf install hugo
+```
+Solus
+```bash
+sudo eopkg install hugo
+```
+Open BSD
+```bash
+doas pkg_add hugo
+```
 #### Windows
 
 ```bash
